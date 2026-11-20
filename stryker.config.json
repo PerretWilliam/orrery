@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.mts"
+  },
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "src/features/config/domain/**/*.ts",
+    "src/features/access/domain/**/*.ts",
+    "src/features/secrets/domain/**/*.ts",
+    "src/features/data-proxy/domain/**/*.ts",
+    "src/lib/ssrf-guard*.ts",
+    "src/lib/crypto*.ts",
+    "!src/**/*.test.ts",
+    "src/lib/utils.ts"
+  ],
+  "thresholds": {
+    "high": 95,
+    "low": 90,
+    "break": 90
+  },
+  "reporters": [
+    "clear-text",
+    "html"
+  ],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "ignoreStatic": false
+}
