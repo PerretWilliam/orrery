@@ -25,17 +25,21 @@ export function assertSchemaNotNewer(databaseVersion: number, appVersion: number
   if (databaseVersion > appVersion) throw new SchemaTooNewError(databaseVersion, appVersion);
 }
 
-async function databaseVersion(db: Db): Promise<number> {
+export async function databaseVersion(db: Db): Promise<number> {
   const exists = await db.execute(sql`select to_regclass('drizzle.__drizzle_migrations') as t`);
   if (!exists.rows[0]?.t) return 0;
   const max = await db.execute(sql`select coalesce(max(created_at), 0) as v from drizzle.__drizzle_migrations`);
   return Number(max.rows[0]?.v);
 }
 
+/** Latest migration version shipped with this app. */
+export function appVersion(folder = join(process.cwd(), "drizzle")): number {
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- folder is the app's own migrations directory, never user input
+  return latestVersion(readFileSync(join(folder, "meta", "_journal.json"), "utf8"));
+}
+
 /** Applies pending migrations at startup, unless the database is ahead of the app. */
 export async function runMigrations(db: Db, folder = join(process.cwd(), "drizzle")): Promise<void> {
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- folder is the app's own migrations directory, never user input
-  const appVersion = latestVersion(readFileSync(join(folder, "meta", "_journal.json"), "utf8"));
-  assertSchemaNotNewer(await databaseVersion(db), appVersion);
+  assertSchemaNotNewer(await databaseVersion(db), appVersion(folder));
   await migrate(db, { migrationsFolder: folder });
 }
