@@ -1,0 +1,7 @@
+{
+  "name": "orrery-spike-auth-refresh",
+  "private": true,
+  "type": "module",
+  "scripts": { "spike": "node spike.mjs" },
+  "dependencies": { "better-auth": "1.7.27" }
+}
