@@ -34,10 +34,17 @@ const issuesOf = (text: string): Omit<ConfigIssue, "fix">[] => {
   const result = parseConfig(text);
   if (result.ok) throw new Error("expected issues");
   // Every issue carries a suggested fix; the other tests compare the rest.
-  return result.issues.map(({ fix, ...rest }) => {
+  // Lines are asserted in their own tests; here they are kept only for problems found by the YAML parser.
+  return result.issues.map(({ fix, line, ...rest }) => {
     expect(fix).toBeTruthy();
-    return rest;
+    const fromYaml = ["config_syntax", "config_duplicate_key", "config_multiple_documents"].includes(rest.code);
+    return fromYaml ? { ...rest, line } : rest;
   });
+};
+const linesOf = (text: string): Record<string, number | undefined> => {
+  const result = parseConfig(text);
+  if (result.ok) throw new Error("expected issues");
+  return Object.fromEntries(result.issues.map((i) => [i.path || i.code, i.line]));
 };
 const codes = (text: string) => issuesOf(text).map((i) => i.code);
 const nested = (depth: number) => `${'{"a":'.repeat(depth)}1${"}".repeat(depth)}`;
@@ -169,8 +176,8 @@ describe("parseConfig YAML problems", () => {
   });
 
   it("rejects collections used as keys", () => {
-    expect(issuesOf("? [a, b]\n: 1\n")).toEqual([{ code: "config_syntax", path: "", message: "Keys must be plain text, not lists or mappings" }]);
-    expect(codes("version: 1\nx:\n  ? { a: 1 }\n  : 2\n")).toEqual(["config_syntax"]);
+    expect(issuesOf("? [a, b]\n: 1\n")).toEqual([{ code: "config_syntax", path: "", line: 1, message: "Keys must be plain text, not lists or mappings" }]);
+    expect(issuesOf("version: 1\nx:\n  ? { a: 1 }\n  : 2\n")).toMatchObject([{ code: "config_syntax", line: 3 }]);
   });
 
   it("rejects unknown tags", () => {
@@ -256,6 +263,42 @@ describe("parseConfig schema issues", () => {
     for (const text of texts) {
       expect(JSON.stringify(issuesOf(text))).not.toContain(secret);
     }
+  });
+});
+
+describe("parseConfig lines", () => {
+  const text = `version: 1
+project:
+  name: X
+  logo: y
+sources:
+  s:
+    url: https://a.example
+    ttl: 1s
+pages:
+  - id: p
+    title: P
+    widgets:
+      - type: kpi
+        source: ghost
+        path: a
+        label: L
+`;
+  it("points schema issues at the offending line", () => {
+    const result = parseConfig(text);
+    expect(result.ok).toBe(false);
+    const lines = Object.fromEntries(result.ok ? [] : result.issues.map((i) => [i.path, i.line]));
+    expect(lines).toMatchObject({ "project.logo": 4, "sources.s.ttl": 8 });
+    expect(linesOf(text.replace("    ttl: 1s\n", "").replace("  logo: y\n", ""))).toMatchObject({ "pages[0].widgets[0].source": 12 });
+  });
+
+  it("falls back to the closest parent (where its value starts) for a missing field", () => {
+    expect(linesOf("version: 1\nproject:\n  color: \"#fff000\"\npages:\n  - id: p\n    title: P\n")).toMatchObject({ "project.name": 3, "pages[0].widgets": 5 });
+  });
+
+  it("locates the version", () => {
+    expect(linesOf("# c\n\nversion: 2\n")).toEqual({ version: 3 });
+    expect(linesOf("project: {}\n")).toEqual({ version: 1 });
   });
 });
 

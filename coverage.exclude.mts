@@ -11,6 +11,8 @@ export const coverageExclude = [
   // Type-only files (no runtime code).
   "src/**/*.d.ts",
   "src/features/repos/domain/git-provider.ts",
+  // Process wiring of the CLI (stdin/argv/exit code), exercised end to end by src/cli/orrery.test.ts.
+  "src/cli/orrery.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];

@@ -1,0 +1,1011 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1,
+      "description": "Schema version. Always 1.",
+      "examples": [
+        1
+      ]
+    },
+    "project": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Project name shown in the tab.",
+          "examples": [
+            "Starfall"
+          ]
+        },
+        "color": {
+          "description": "Accent color, as #rrggbb.",
+          "examples": [
+            "#7c3aed"
+          ],
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "description": "Project identity.",
+      "examples": [
+        {
+          "name": "Starfall",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    "sources": {
+      "default": {},
+      "description": "Data sources by id, 50 at most. Widgets refer to them by id.",
+      "examples": [
+        {
+          "game_stats": {
+            "url": "https://api.starfall.example/internal/stats",
+            "ttl": "60s"
+          }
+        }
+      ],
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "http(s) URL of the endpoint. Secrets (`${NAME}`) are allowed in the path, query and headers, never in the host.",
+            "examples": [
+              "https://api.starfall.example/internal/stats"
+            ]
+          },
+          "method": {
+            "default": "GET",
+            "description": "HTTP method.",
+            "examples": [
+              "GET"
+            ],
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST"
+            ]
+          },
+          "headers": {
+            "description": "Request headers. Values may reference secrets as `${SECRET_NAME}`.",
+            "examples": [
+              {
+                "Authorization": "Bearer ${GAME_API_TOKEN}"
+              }
+            ],
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9-]{1,64}$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[\\x20-\\x7e]{0,2048}$"
+            }
+          },
+          "body": {
+            "description": "Static JSON body, POST only (for example a GraphQL query).",
+            "examples": [
+              {
+                "query": "{ stats { retention } }"
+              }
+            ],
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/__schema0"
+            }
+          },
+          "ttl": {
+            "default": "5m",
+            "description": "How long a response is cached: a number and `s`, `m` or `h`, from 10s to 24h.",
+            "examples": [
+              "60s"
+            ],
+            "type": "string",
+            "pattern": "^([1-9]\\d{0,5})([smh])$"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "pages": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,63}$",
+            "description": "Unique page id, used in the tab URL.",
+            "examples": [
+              "overview"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Page title.",
+            "examples": [
+              "Overview"
+            ]
+          },
+          "widgets": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "kpi",
+                      "description": "Single value with optional trend and alert threshold.",
+                      "examples": [
+                        "kpi"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "source": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                      "description": "Id of a source declared under `sources`.",
+                      "examples": [
+                        "game_stats"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the value in the source response.",
+                      "examples": [
+                        "data.retention.d7"
+                      ]
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80,
+                      "description": "Name of the value.",
+                      "examples": [
+                        "Day-7 retention"
+                      ]
+                    },
+                    "unit": {
+                      "description": "Unit shown after the value.",
+                      "examples": [
+                        "%"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 16
+                    },
+                    "trend": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the trend value (a number, shown with an arrow) in the source response.",
+                      "examples": [
+                        "data.retention.d7_delta"
+                      ]
+                    },
+                    "alert": {
+                      "description": "Only changes the color and icon of the widget; never sends a notification.",
+                      "examples": [
+                        {
+                          "below": 18
+                        }
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "below": {
+                          "description": "Highlight the widget when the value is below this number.",
+                          "examples": [
+                            18
+                          ],
+                          "type": "number"
+                        },
+                        "above": {
+                          "description": "Highlight the widget when the value is above this number.",
+                          "examples": [
+                            100
+                          ],
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "source",
+                    "path",
+                    "label"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "line",
+                      "description": "Chart of type line.",
+                      "examples": [
+                        "line"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "source": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                      "description": "Id of a source declared under `sources`.",
+                      "examples": [
+                        "game_stats"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the array of items in the source response.",
+                      "examples": [
+                        "data.daily"
+                      ]
+                    },
+                    "x": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the X value inside each item.",
+                      "examples": [
+                        "date"
+                      ]
+                    },
+                    "y": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the Y value inside each item.",
+                      "examples": [
+                        "players"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "source",
+                    "path",
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "bar",
+                      "description": "Chart of type bar.",
+                      "examples": [
+                        "bar"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "source": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                      "description": "Id of a source declared under `sources`.",
+                      "examples": [
+                        "game_stats"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the array of items in the source response.",
+                      "examples": [
+                        "data.daily"
+                      ]
+                    },
+                    "x": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the X value inside each item.",
+                      "examples": [
+                        "date"
+                      ]
+                    },
+                    "y": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the Y value inside each item.",
+                      "examples": [
+                        "players"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "source",
+                    "path",
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "donut",
+                      "description": "Donut chart.",
+                      "examples": [
+                        "donut"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "source": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                      "description": "Id of a source declared under `sources`.",
+                      "examples": [
+                        "game_stats"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the array of items in the source response.",
+                      "examples": [
+                        "data.platforms"
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the slice name inside each item.",
+                      "examples": [
+                        "platform"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the slice value inside each item.",
+                      "examples": [
+                        "players"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "source",
+                    "path",
+                    "name",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "table",
+                      "description": "Sortable, searchable table.",
+                      "examples": [
+                        "table"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "source": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                      "description": "Id of a source declared under `sources`.",
+                      "examples": [
+                        "game_stats"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the array of items in the source response.",
+                      "examples": [
+                        "data.players"
+                      ]
+                    },
+                    "columns": {
+                      "minItems": 1,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "header": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 80,
+                            "description": "Column title.",
+                            "examples": [
+                              "Player"
+                            ]
+                          },
+                          "path": {
+                            "type": "string",
+                            "maxLength": 256,
+                            "description": "Path of the cell value inside each item.",
+                            "examples": [
+                              "name"
+                            ]
+                          },
+                          "format": {
+                            "default": "text",
+                            "description": "How to render the cell. `badge` shows the value as a status badge.",
+                            "examples": [
+                              "text"
+                            ],
+                            "type": "string",
+                            "enum": [
+                              "text",
+                              "number",
+                              "date",
+                              "badge"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "header",
+                          "path"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Columns, in display order.",
+                      "examples": [
+                        [
+                          {
+                            "header": "Player",
+                            "path": "name"
+                          }
+                        ]
+                      ]
+                    },
+                    "searchable": {
+                      "default": true,
+                      "description": "Show a search box.",
+                      "examples": [
+                        true
+                      ],
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "source",
+                    "path",
+                    "columns"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "status",
+                      "description": "Health or uptime indicator: up, degraded or down.",
+                      "examples": [
+                        "status"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "source": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                      "description": "Id of a source declared under `sources`.",
+                      "examples": [
+                        "game_stats"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the value to classify in the source response.",
+                      "examples": [
+                        "data.status"
+                      ]
+                    },
+                    "up": {
+                      "minItems": 1,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 64
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      },
+                      "description": "Values that mean up.",
+                      "examples": [
+                        [
+                          "ok"
+                        ]
+                      ]
+                    },
+                    "degraded": {
+                      "description": "Values that mean degraded. Any other value means down.",
+                      "examples": [
+                        [
+                          "slow"
+                        ]
+                      ],
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 64
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "source",
+                    "path",
+                    "up"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "cohort",
+                      "description": "Retention matrix: one row per cohort, one column per day.",
+                      "examples": [
+                        "cohort"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "source": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                      "description": "Id of a source declared under `sources`.",
+                      "examples": [
+                        "game_stats"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the array of items in the source response.",
+                      "examples": [
+                        "data.cohorts"
+                      ]
+                    },
+                    "cohort": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the cohort name inside each item.",
+                      "examples": [
+                        "week"
+                      ]
+                    },
+                    "values": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the array of retention values, one per day inside each item.",
+                      "examples": [
+                        "retention"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "source",
+                    "path",
+                    "cohort",
+                    "values"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "markdown",
+                      "description": "Sanitized Markdown notes, inline or read from a source.",
+                      "examples": [
+                        "markdown"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "content": {
+                      "description": "Inline Markdown. Use this or `source` and `path`.",
+                      "examples": [
+                        "Season 3 ships on Friday."
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 10000
+                    },
+                    "source": {
+                      "description": "Id of a source holding the Markdown. Needs `path`.",
+                      "examples": [
+                        "release_notes"
+                      ],
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 256,
+                      "description": "Path of the Markdown text in the source response.",
+                      "examples": [
+                        "data.notes"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "github.issues",
+                      "description": "Issues of this repository.",
+                      "examples": [
+                        "github.issues"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "state": {
+                      "default": "open",
+                      "description": "Which issues to list.",
+                      "examples": [
+                        "open"
+                      ],
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "closed",
+                        "all"
+                      ]
+                    },
+                    "limit": {
+                      "default": 10,
+                      "description": "Maximum number of items to show.",
+                      "examples": [
+                        10
+                      ],
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 50
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "github.pull_requests",
+                      "description": "Pull requests of this repository.",
+                      "examples": [
+                        "github.pull_requests"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "state": {
+                      "default": "open",
+                      "description": "Which pull requests to list.",
+                      "examples": [
+                        "open"
+                      ],
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "closed",
+                        "all"
+                      ]
+                    },
+                    "limit": {
+                      "default": 10,
+                      "description": "Maximum number of items to show.",
+                      "examples": [
+                        10
+                      ],
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 50
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "github.workflow_runs",
+                      "description": "Recent GitHub Actions runs of this repository.",
+                      "examples": [
+                        "github.workflow_runs"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "branch": {
+                      "description": "Only runs on this branch.",
+                      "examples": [
+                        "main"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255
+                    },
+                    "limit": {
+                      "default": 10,
+                      "description": "Maximum number of items to show.",
+                      "examples": [
+                        10
+                      ],
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 50
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "github.releases",
+                      "description": "Releases of this repository.",
+                      "examples": [
+                        "github.releases"
+                      ]
+                    },
+                    "title": {
+                      "description": "Heading shown above the widget.",
+                      "examples": [
+                        "Daily active users"
+                      ],
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "limit": {
+                      "default": 10,
+                      "description": "Maximum number of items to show.",
+                      "examples": [
+                        10
+                      ],
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 50
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "description": "Widgets of the page, in display order.",
+            "examples": [
+              [
+                {
+                  "type": "github.pull_requests",
+                  "state": "open"
+                }
+              ]
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "widgets"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Pages of the dashboard. At least one.",
+      "examples": [
+        [
+          {
+            "id": "overview",
+            "title": "Overview",
+            "widgets": []
+          }
+        ]
+      ]
+    }
+  },
+  "required": [
+    "version",
+    "project",
+    "pages"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      ]
+    }
+  },
+  "title": "Orrery .hub.yml, version 1",
+  "description": "Dashboard description of a repository. Every field has a description and an example."
+}

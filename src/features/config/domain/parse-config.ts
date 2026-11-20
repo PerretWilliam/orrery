@@ -1,4 +1,4 @@
-import { isCollection, parseDocument, visit, type YAMLError } from "yaml";
+import { isCollection, parseDocument, visit, type Document, type YAMLError } from "yaml";
 import type { z } from "zod";
 import { configIssue, type ConfigIssue, type ConfigIssueCode } from "./errors";
 import { LIMITS } from "./limits";
@@ -54,14 +54,22 @@ function scan(root: unknown): ConfigIssue | null {
   return null;
 }
 
-function schemaIssues(error: z.ZodError): ConfigIssue[] {
+const lineAt = (text: string, offset: number): number => text.slice(0, offset).split("\n").length;
+
+/** Line of the value at `path`, or of its closest parent when the path points at something missing. */
+function lineOf(doc: Document, text: string, path: readonly PropertyKey[]): number {
+  const offset = (doc.getIn(path as unknown[], true) as { range?: number[] } | undefined)?.range?.[0];
+  return offset === undefined ? lineOf(doc, text, path.slice(0, -1)) : lineAt(text, offset);
+}
+
+function schemaIssues(error: z.ZodError, doc: Document, text: string): ConfigIssue[] {
   return error.issues.flatMap((issue): ConfigIssue[] => {
     if (issue.code === "unrecognized_keys") {
-      return issue.keys.map((key) => configIssue("config_unknown_field", formatPath([...issue.path, key]), `Unknown field "${key}"`));
+      return issue.keys.map((key) => configIssue("config_unknown_field", formatPath([...issue.path, key]), `Unknown field "${key}"`, lineOf(doc, text, [...issue.path, key])));
     }
     const custom = issue.code === "custom" ? (issue.params?.code as ConfigIssueCode | undefined) : undefined;
     const code = custom ?? (issue.input === undefined ? "config_required" : "config_invalid_value");
-    return [configIssue(code, formatPath(issue.path), issue.message)];
+    return [configIssue(code, formatPath(issue.path), issue.message, lineOf(doc, text, issue.path))];
   });
 }
 
@@ -74,14 +82,17 @@ export function parseConfig(text: string): ParseConfigResult {
   const problems = [...doc.errors, ...doc.warnings];
   if (problems.length > 0) return { ok: false, issues: problems.slice(0, MAX_ISSUES).map((problem) => yamlIssue(problem, text)) };
 
-  let complexKey = false;
+  let complexKeyAt: number | undefined;
   visit(doc, {
     Pair(_, pair) {
-      complexKey = isCollection(pair.key);
-      return complexKey ? visit.BREAK : undefined;
+      if (!isCollection(pair.key)) return undefined;
+      complexKeyAt = (pair.key.range as number[])[0];
+      return visit.BREAK;
     },
   });
-  if (complexKey) return failure("config_syntax", "Keys must be plain text, not lists or mappings");
+  if (complexKeyAt !== undefined) {
+    return { ok: false, issues: [configIssue("config_syntax", "", "Keys must be plain text, not lists or mappings", lineAt(text, complexKeyAt))] };
+  }
 
   let data: unknown;
   try {
@@ -95,10 +106,12 @@ export function parseConfig(text: string): ParseConfigResult {
   const unsafe = scan(data);
   if (unsafe) return { ok: false, issues: [unsafe] };
 
-  if (!Object.hasOwn(data, "version")) return failure("config_required", "The version field is required", "version");
-  if (data.version !== 1) return failure("config_unsupported_version", "Only version 1 is supported", "version");
+  if (!Object.hasOwn(data, "version")) return { ok: false, issues: [configIssue("config_required", "version", "The version field is required", 1)] };
+  if (data.version !== 1) {
+    return { ok: false, issues: [configIssue("config_unsupported_version", "version", "Only version 1 is supported", lineOf(doc, text, ["version"]))] };
+  }
 
   const result = ConfigV1.safeParse(data, { reportInput: true });
-  if (!result.success) return { ok: false, issues: schemaIssues(result.error).slice(0, MAX_ISSUES) };
+  if (!result.success) return { ok: false, issues: schemaIssues(result.error, doc, text).slice(0, MAX_ISSUES) };
   return { ok: true, config: result.data };
 }

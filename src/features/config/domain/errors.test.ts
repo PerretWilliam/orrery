@@ -51,7 +51,7 @@ describe("config error catalog", () => {
       const json = JSON.parse(JSON.stringify(result.issues));
       expect(json).toEqual(
         expect.arrayContaining([
-          { code: "config_unknown_field", path: "extra", message: 'Unknown field "extra"', fix: CONFIG_ERRORS.config_unknown_field.fix },
+          { code: "config_unknown_field", path: "extra", message: 'Unknown field "extra"', fix: CONFIG_ERRORS.config_unknown_field.fix, line: 2 },
           expect.objectContaining({ code: "config_required", path: "project" }),
           expect.objectContaining({ code: "config_required", path: "pages" }),
         ]),
