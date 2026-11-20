@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parsePath } from "./json-path";
 import { LIMITS } from "./limits";
 import { parseTtl, TTL_PATTERN } from "./ttl";
 
@@ -17,27 +18,14 @@ const field = <T extends z.ZodType>(schema: T, description: string, example: unk
 
 const SOURCE_ID = /^[a-z][a-z0-9_]{0,63}$/;
 const PAGE_ID = /^[a-z][a-z0-9-]{0,63}$/;
-const PATH_START = /^[A-Za-z_]/;
-const PATH_KEY = /^[\w-]+$/;
-const PATH_INDEX = /\[\d{1,6}\]/g;
-const UNSAFE_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
 const HEADER_NAME = /^[A-Za-z0-9-]{1,64}$/;
 const HEADER_VALUE = /^[\x20-\x7e]{0,2048}$/;
 const FORBIDDEN_HEADERS = new Set(["host", "content-length", "transfer-encoding", "connection"]);
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
-const isSafePath = (path: string): boolean =>
-  PATH_START.test(path) &&
-  path.split(".").every((segment) => {
-    const bracket = segment.indexOf("[");
-    const key = bracket < 0 ? segment : segment.slice(0, bracket);
-    const indexes = bracket < 0 ? "" : segment.slice(bracket);
-    return PATH_KEY.test(key) && !UNSAFE_SEGMENTS.has(key) && indexes.replace(PATH_INDEX, "") === "";
-  });
-
 /** A path read by the safe extractor: `data.retention.d7`, `items[0].name`. No wildcards, no expressions. */
 const jsonPath = (description: string, example: string) =>
-  field(z.string().max(256).refine(isSafePath, "Not a plain path such as data.items[0].name"), description, example);
+  field(z.string().max(256).refine((p) => parsePath(p) !== null, "Not a plain path such as data.items[0].name"), description, example);
 
 const isPlainHttpUrl = (value: string): boolean => {
   if (!URL.canParse(value)) return false;
