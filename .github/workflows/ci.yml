@@ -99,4 +99,4 @@ jobs:
       - name: OSV-Scanner
         run: >
           docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:v2.7.1
-          scan source --lockfile=/src/package-lock.json
+          scan source --config=/src/osv-scanner.toml --lockfile=/src/package-lock.json

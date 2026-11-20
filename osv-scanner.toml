@@ -1,0 +1,11 @@
+# Accepted findings. Each entry needs a reason and an expiry date; review before expiry.
+
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2027-02-20
+reason = "glob 10.5.0 in dev-only tooling (testcontainers > archiver). Not in the production image. Fix needs a major bump of the parent."
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-02-20
+reason = "minimatch DoS via globparts in dev-only tooling (Stryker, shadcn CLI, archiver). Not in the production image. Fix needs a major bump of the parents."
