@@ -1,0 +1,21 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: For security vulnerabilities, do not open an issue. Use the private reporting link: https://github.com/PerretWilliam/orrery/security/advisories/new
+  - type: textarea
+    id: what
+    attributes: { label: What happened?, description: Include what you expected instead. }
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes: { label: Steps to reproduce }
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes: { label: Orrery version or commit }
+  - type: textarea
+    id: logs
+    attributes: { label: Logs, description: "Remove any secret before pasting.", render: shell }
