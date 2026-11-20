@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "./limits";
-import { formatPath, parseConfig, type ConfigIssue } from "./parse-config";
+import type { ConfigIssue } from "./errors";
+import { formatPath, parseConfig } from "./parse-config";
 
 const VALID = `version: 1
 project:
@@ -29,10 +30,14 @@ pages:
 
 const MINIMAL = "version: 1\nproject: { name: X }\npages: [{ id: p, title: P, widgets: [] }]\n";
 
-const issuesOf = (text: string): ConfigIssue[] => {
+const issuesOf = (text: string): Omit<ConfigIssue, "fix">[] => {
   const result = parseConfig(text);
   if (result.ok) throw new Error("expected issues");
-  return result.issues;
+  // Every issue carries a suggested fix; the other tests compare the rest.
+  return result.issues.map(({ fix, ...rest }) => {
+    expect(fix).toBeTruthy();
+    return rest;
+  });
 };
 const codes = (text: string) => issuesOf(text).map((i) => i.code);
 const nested = (depth: number) => `${'{"a":'.repeat(depth)}1${"}".repeat(depth)}`;
@@ -233,7 +238,7 @@ describe("parseConfig schema issues", () => {
 
   it("reports unknown sources", () => {
     const text = "version: 1\nproject: { name: X }\npages: [{ id: p, title: P, widgets: [{ type: kpi, source: ghost, path: a, label: L }] }]\n";
-    expect(issuesOf(text)).toEqual([{ code: "config_invalid_value", path: "pages[0].widgets[0].source", message: 'Unknown source "ghost"' }]);
+    expect(issuesOf(text)).toEqual([{ code: "config_unknown_source", path: "pages[0].widgets[0].source", message: 'Unknown source "ghost"' }]);
   });
 
   it("reports at most 20 issues", () => {

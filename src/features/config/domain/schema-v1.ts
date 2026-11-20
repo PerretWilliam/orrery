@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ConfigIssueCode } from "./errors";
 import { parsePath } from "./json-path";
 import { LIMITS } from "./limits";
 import { parseTtl, TTL_PATTERN } from "./ttl";
@@ -245,19 +246,20 @@ export const ConfigV1 = z
     ]),
   })
   .superRefine((config, ctx) => {
-    const fail = (path: (string | number)[], message: string) => ctx.addIssue({ code: "custom", path, message });
-    if (Object.keys(config.sources).length > LIMITS.maxSources) fail(["sources"], `At most ${LIMITS.maxSources} sources`);
+    const fail = (code: ConfigIssueCode, path: (string | number)[], message: string) =>
+      ctx.addIssue({ code: "custom", path, message, params: { code } });
+    if (Object.keys(config.sources).length > LIMITS.maxSources) fail("config_limit_exceeded", ["sources"], `At most ${LIMITS.maxSources} sources`);
     if (config.pages.reduce((n, page) => n + page.widgets.length, 0) > LIMITS.maxWidgets) {
-      fail(["pages"], `At most ${LIMITS.maxWidgets} widgets in total`);
+      fail("config_limit_exceeded", ["pages"], `At most ${LIMITS.maxWidgets} widgets in total`);
     }
     const seen = new Set<string>();
     config.pages.forEach((page, p) => {
-      if (seen.has(page.id)) fail(["pages", p, "id"], `Duplicate page id "${page.id}"`);
+      if (seen.has(page.id)) fail("config_duplicate_page_id", ["pages", p, "id"], `Duplicate page id "${page.id}"`);
       seen.add(page.id);
       page.widgets.forEach((widget, w) => {
         const ref = "source" in widget ? widget.source : undefined;
         if (ref !== undefined && !Object.hasOwn(config.sources, ref)) {
-          fail(["pages", p, "widgets", w, "source"], `Unknown source "${ref}"`);
+          fail("config_unknown_source", ["pages", p, "widgets", w, "source"], `Unknown source "${ref}"`);
         }
       });
     });
