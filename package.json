@@ -18,7 +18,9 @@
     "audit:deps": "npm audit --omit=dev",
     "ci:local": "npm run typecheck && npm run lint && npm run db:check && npm run coverage && npm run build && npm run size",
     "db:generate": "drizzle-kit generate",
-    "db:check": "drizzle-kit check"
+    "db:check": "drizzle-kit check",
+    "cli:build": "node scripts/build-cli.mjs",
+    "schema:generate": "UPDATE_SCHEMA=1 vitest run src/features/config/domain/json-schema.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -58,6 +60,7 @@
     "@vitest/coverage-v8": "^5.1.1",
     "babel-plugin-react-compiler": "1.0.0",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "eslint-plugin-i18next": "^6.1.5",
@@ -85,5 +88,8 @@
   },
   "overrides": {
     "qs": "^6.16.1"
+  },
+  "bin": {
+    "orrery": "dist/cli/orrery.cjs"
   }
 }
