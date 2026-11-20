@@ -1,29 +1,14 @@
 import { isCollection, parseDocument, visit, type YAMLError } from "yaml";
 import type { z } from "zod";
+import { configIssue, type ConfigIssue, type ConfigIssueCode } from "./errors";
 import { LIMITS } from "./limits";
 import { ConfigV1 } from "./schema-v1";
 
 /**
  * Turns the text of a `.hub.yml` into a validated config, or a list of issues. Never throws on bad input.
  * The file is untrusted: size, alias, depth and key limits are enforced before the schema runs.
- * Issue codes are provisional until the error catalog card freezes them.
  */
 
-export type ConfigIssueCode =
-  | "config_too_large"
-  | "config_syntax"
-  | "config_duplicate_key"
-  | "config_multiple_documents"
-  | "config_alias_limit"
-  | "config_too_deep"
-  | "config_forbidden_key"
-  | "config_not_a_mapping"
-  | "config_required"
-  | "config_unsupported_version"
-  | "config_unknown_field"
-  | "config_invalid_value";
-
-export type ConfigIssue = { code: ConfigIssueCode; path: string; message: string; line?: number };
 export type ParseConfigResult = { ok: true; config: ConfigV1 } | { ok: false; issues: ConfigIssue[] };
 
 const MAX_ISSUES = 20;
@@ -36,18 +21,19 @@ export const formatPath = (path: readonly PropertyKey[]): string =>
 
 const failure = (code: ConfigIssueCode, message: string, path = ""): ParseConfigResult => ({
   ok: false,
-  issues: [{ code, path, message }],
+  issues: [configIssue(code, path, message)],
 });
 
 const isMapping = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const yamlIssue = (error: YAMLError, text: string): ConfigIssue => ({
-  code: error.code === "DUPLICATE_KEY" ? "config_duplicate_key" : error.code === "MULTIPLE_DOCS" ? "config_multiple_documents" : "config_syntax",
-  path: "",
-  message: error.message.split("\n")[0],
-  line: text.slice(0, error.pos[0]).split("\n").length,
-});
+const yamlIssue = (error: YAMLError, text: string): ConfigIssue =>
+  configIssue(
+    error.code === "DUPLICATE_KEY" ? "config_duplicate_key" : error.code === "MULTIPLE_DOCS" ? "config_multiple_documents" : "config_syntax",
+    "",
+    error.message.split("\n")[0],
+    text.slice(0, error.pos[0]).split("\n").length,
+  );
 
 /** Iterative walk (no recursion to overflow): nesting depth and `__proto__` keys. */
 function scan(root: unknown): ConfigIssue | null {
@@ -56,11 +42,11 @@ function scan(root: unknown): ConfigIssue | null {
     const { value, path } = item;
     if (typeof value !== "object" || value === null) continue;
     if (path.length >= LIMITS.maxDepth) {
-      return { code: "config_too_deep", path: formatPath(path), message: `Nesting is deeper than ${LIMITS.maxDepth} levels` };
+      return configIssue("config_too_deep", formatPath(path), `Nesting is deeper than ${LIMITS.maxDepth} levels`);
     }
     for (const key of Object.keys(value)) {
       if (key === "__proto__") {
-        return { code: "config_forbidden_key", path: formatPath(path), message: "The key __proto__ is not allowed" };
+        return configIssue("config_forbidden_key", formatPath(path), "The key __proto__ is not allowed");
       }
       stack.push({ value: Reflect.get(value, key), path: [...path, Array.isArray(value) ? Number(key) : key] });
     }
@@ -71,14 +57,11 @@ function scan(root: unknown): ConfigIssue | null {
 function schemaIssues(error: z.ZodError): ConfigIssue[] {
   return error.issues.flatMap((issue): ConfigIssue[] => {
     if (issue.code === "unrecognized_keys") {
-      return issue.keys.map((key) => ({
-        code: "config_unknown_field",
-        path: formatPath([...issue.path, key]),
-        message: `Unknown field "${key}"`,
-      }));
+      return issue.keys.map((key) => configIssue("config_unknown_field", formatPath([...issue.path, key]), `Unknown field "${key}"`));
     }
-    const missing = issue.input === undefined;
-    return [{ code: missing ? "config_required" : "config_invalid_value", path: formatPath(issue.path), message: issue.message }];
+    const custom = issue.code === "custom" ? (issue.params?.code as ConfigIssueCode | undefined) : undefined;
+    const code = custom ?? (issue.input === undefined ? "config_required" : "config_invalid_value");
+    return [configIssue(code, formatPath(issue.path), issue.message)];
   });
 }
 
