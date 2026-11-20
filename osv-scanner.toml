@@ -9,3 +9,8 @@ reason = "glob 10.5.0 in dev-only tooling (testcontainers > archiver). Not in th
 id = "GHSA-g3hv-75wg-m249"
 ignoreUntil = 2027-02-20
 reason = "minimatch DoS via globparts in dev-only tooling (Stryker, shadcn CLI, archiver). Not in the production image. Fix needs a major bump of the parents."
+
+[[IgnoredVulns]]
+id = "GHSA-67mh-4wv8-2f99"
+ignoreUntil = 2027-02-20
+reason = "esbuild 0.18.20 bundled by drizzle-kit (@esbuild-kit), dev-only CLI used to generate migrations. The advisory concerns esbuild's dev server, which is never run. Not in the production image."
