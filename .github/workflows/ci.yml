@@ -43,6 +43,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - name: Migrations match the schema
+        run: npm run db:check && npm run db:generate && test -z "$(git status --porcelain drizzle)"
       - run: npm run coverage
       - run: npm run build
       - name: Bundle size budget
