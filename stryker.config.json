@@ -16,6 +16,7 @@
     "src/features/auth/server/service.ts",
     "src/features/auth/server/auth-secret.ts",
     "src/features/auth/server/http.ts",
+    "src/features/access/server/permissions.ts",
     "src/lib/ssrf-guard*.ts",
     "src/lib/crypto*.ts",
     "!src/**/*.test.ts",
