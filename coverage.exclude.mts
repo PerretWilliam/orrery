@@ -17,6 +17,8 @@ export const coverageExclude = [
   "src/features/setup/server/drizzle-store.ts",
   // Drizzle implementation of the auth store: SQL only, exercised on a real Postgres by tests/integration/auth-store.test.ts.
   "src/features/auth/server/drizzle-store.ts",
+  // Drizzle implementation of the webhook store: SQL only, exercised on a real Postgres by tests/integration/webhook-store.test.ts.
+  "src/features/webhooks/server/drizzle-store.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];
