@@ -24,5 +24,22 @@
     "intro": "Orrery shows what GitHub lets you see. Sign in with the GitHub account you use for your repositories.",
     "submit": "Sign in with GitHub",
     "errorTitle": "Sign-in problem"
+  },
+  "Shell": {
+    "brand": "Orrery",
+    "projects": "Projects",
+    "signOut": "Sign out",
+    "pages": "Pages",
+    "emptyTitle": "No projects yet",
+    "emptyBody": "A repository shows up here once it has a .hub.yml file on its default branch and the GitHub App can read it.",
+    "private": "Private",
+    "archived": "Archived",
+    "issuesTitle": "The configuration file has problems",
+    "issuesShowingLast": "Showing the last valid version until they are fixed.",
+    "issuesNeverValid": "Nothing can be shown until they are fixed.",
+    "issuePath": "Path",
+    "issueFix": "Fix",
+    "noWidgets": "This page has no widgets yet.",
+    "widgetSoon": "Not drawn yet"
   }
 }

@@ -59,3 +59,11 @@ export async function currentUser(headers: Headers): Promise<SessionCheck | null
   if (!context || !found) return null;
   return context.service.check({ ...found.session });
 }
+
+/** Who is behind these headers: the session's user and their GitHub login. `null` without a valid session. */
+export async function currentViewer(headers: Headers): Promise<{ userId: string; login: string } | null> {
+  const check = await currentUser(headers);
+  if (!check?.ok) return null;
+  const state = await createAuthStore(getDb()).userState(check.userId);
+  return state?.login ? { userId: check.userId, login: state.login } : null;
+}
