@@ -88,7 +88,10 @@
     "node": ">=24"
   },
   "overrides": {
-    "qs": "^6.16.1"
+    "qs": "^6.16.1",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.0"
+    }
   },
   "bin": {
     "orrery": "dist/cli/orrery.cjs"
