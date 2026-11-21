@@ -65,7 +65,7 @@
           "url": {
             "type": "string",
             "maxLength": 2048,
-            "description": "http(s) URL of the endpoint. Secrets (`${NAME}`) are allowed in the path, query and headers, never in the host.",
+            "description": "http(s) URL of the endpoint. Secrets (`${NAME}`) are allowed in the query and in headers, never in the scheme, host, path or body.",
             "examples": [
               "https://api.starfall.example/internal/stats"
             ]

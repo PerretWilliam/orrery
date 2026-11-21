@@ -48,7 +48,7 @@ const Source = z
   .strictObject({
     url: field(
       z.string().max(2048).refine(isPlainHttpUrl, "Must be an http(s) URL without credentials or secrets in the host"),
-      "http(s) URL of the endpoint. Secrets (`${NAME}`) are allowed in the path, query and headers, never in the host.",
+      "http(s) URL of the endpoint. Secrets (`${NAME}`) are allowed in the query and in headers, never in the scheme, host, path or body.",
       "https://api.starfall.example/internal/stats",
     ),
     method: field(z.enum(["GET", "POST"]).default("GET"), "HTTP method.", "GET"),
