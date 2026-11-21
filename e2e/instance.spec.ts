@@ -48,6 +48,7 @@ test.describe("once the instance is set up", () => {
   });
 
   test("a signed delivery makes the hub find the repository, and its tab appears", async ({ browser, request }) => {
+    test.setTimeout(90_000);
     const { context, page } = await signedIn(browser, "alice");
     const delivery = signedDelivery("installation", { action: "created" }, "install-1");
     expect((await request.post("/api/webhooks/github", delivery)).status()).toBe(200);

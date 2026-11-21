@@ -11,6 +11,9 @@ const instanceServer = {
   command: "npm run start -- --port 3001",
   url: "http://localhost:3001/healthz",
   reuseExistingServer: false,
+  // The server's log is what explains a failed journey.
+  stdout: "pipe" as const,
+  stderr: "pipe" as const,
   env: {
     DATABASE_URL: database ?? "",
     ORRERY_SETUP_TOKEN: SETUP_TOKEN,
