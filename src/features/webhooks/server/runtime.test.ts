@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { registerPermissionService } from "@/features/access/server/registry";
-import type { PermissionService } from "@/features/access/server/permissions";
+import type { AccessPolicy } from "@/features/access/server/policy";
+import { registerAccessPolicy } from "@/features/access/server/registry";
 import { SETTINGS_CONTEXT } from "@/features/setup/server/service";
 import { encrypt, parseKeyring } from "@/lib/crypto";
 
@@ -17,7 +17,7 @@ beforeEach(() => vi.stubEnv("ORRERY_ENCRYPTION_KEYS", KEYS));
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.clearAllMocks();
-  registerPermissionService(undefined);
+  registerAccessPolicy(undefined);
 });
 
 const signed = (raw: string, secret: string) =>
@@ -32,9 +32,9 @@ describe("getWebhookHandler", () => {
     store.secretCiphertext.mockResolvedValue(null);
     expect((await getWebhookHandler()(signed("{}", "x"))).status).toBe(503);
   });
-  it("decrypts the stored secret, records the delivery and invalidates the live permission cache", async () => {
+  it("decrypts the stored secret, records the delivery and invalidates the live access policy", async () => {
     const invalidate = vi.fn();
-    registerPermissionService({ invalidate } as unknown as PermissionService);
+    registerAccessPolicy({ invalidate } as unknown as AccessPolicy);
     store.secretCiphertext.mockResolvedValue(encrypt("hook-secret", parseKeyring(KEYS), SETTINGS_CONTEXT.webhookSecret));
     store.claimDelivery.mockResolvedValue(true);
     const response = await getWebhookHandler()(signed(JSON.stringify({ member: { login: "hubot" } }), "hook-secret"));

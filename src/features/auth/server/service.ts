@@ -7,6 +7,8 @@ export type AuthDeps = {
   store: AuthStore;
   /** From the first-run wizard: the browser that finished setup becomes admin, once. */
   claimAdmin: (claimSecret: string | undefined, login: string) => Promise<boolean>;
+  /** The admin's sign-in allowlist (or its default). Admins never depend on it. */
+  canSignIn: (login: string) => Promise<boolean>;
   /** A valid GitHub access token for the user, refreshed if needed. Throws when GitHub refuses. */
   fetchAccessToken: (userId: string) => Promise<string>;
   now: () => Date;
@@ -17,16 +19,16 @@ export type SessionCheck = { ok: true; userId: string } | { ok: false; issue: Au
 export type TokenResult = { ok: true; token: string } | { ok: false; issue: AuthIssue };
 
 /**
- * Who may hold a session, and what happens to it. Fail closed: today only instance admins (or the browser that finished
- * setup) can sign in; the access policy card replaces `authorize` with the sign-in allowlist.
+ * Who may hold a session, and what happens to it. Fail closed: instance admins (or the browser that finished setup)
+ * can always sign in; everyone else must pass the admin's sign-in allowlist.
  */
-export function createAuthService({ store, claimAdmin, fetchAccessToken, now }: AuthDeps) {
+export function createAuthService({ store, claimAdmin, canSignIn, fetchAccessToken, now }: AuthDeps) {
   const flight = singleFlight<TokenResult>();
   const refreshFailed = () => authIssue("auth_refresh_failed", "GitHub no longer renews this user's access");
 
   async function authorize(login: string, claimSecret: string | undefined): Promise<boolean> {
     const lowered = login.toLowerCase();
-    return (await store.isAdmin(lowered)) || (await claimAdmin(claimSecret, lowered));
+    return (await store.isAdmin(lowered)) || (await claimAdmin(claimSecret, lowered)) || (await canSignIn(lowered));
   }
 
   return {
