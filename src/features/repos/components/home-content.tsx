@@ -19,9 +19,11 @@ export function Brand() {
 
 /** `/`: send the signed-in user to where they left, else to their first project. */
 export async function HomeContent() {
+  // Reading the request first makes this request-time: the environment must not be frozen into the prerender.
+  const requestHeaders = await headers();
   if (!process.env.DATABASE_URL) return <Brand />;
   if (!(await getSetupService().isCompleted())) redirect("/setup");
-  const viewer = await currentViewer(await headers());
+  const viewer = await currentViewer(requestHeaders);
   if (!viewer) redirect("/sign-in");
 
   const projects = await getProjects().visibleTo(viewer.login);
