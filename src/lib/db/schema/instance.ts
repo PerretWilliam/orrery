@@ -18,6 +18,9 @@ export const instanceSettings = pgTable(
     privateKeyCiphertext: text("private_key_ciphertext"),
     webhookSecretCiphertext: text("webhook_secret_ciphertext"),
     encryptionKeyId: text("encryption_key_id"),
+    // Hash of the secret handed to the browser that finished setup; the first GitHub sign-in presenting it becomes admin.
+    adminClaimHash: text("admin_claim_hash"),
+    adminClaimExpiresAt: timestamp("admin_claim_expires_at", { withTimezone: true }),
     pollIntervalSeconds: integer("poll_interval_seconds").notNull().default(300),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
