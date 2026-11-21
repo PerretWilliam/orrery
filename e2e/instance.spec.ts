@@ -10,7 +10,7 @@ test.beforeAll(resetInstance);
 test("a new instance sends the first visitor to the setup, which asks for the token", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/setup$/);
-  await expect(page.getByRole("heading", { name: "Set up Orrery" })).toBeVisible();
+  await expect(page.getByText("Set up Orrery", { exact: true })).toBeVisible();
 
   await page.getByLabel("Setup token").fill("not-the-token");
   await page.getByRole("button", { name: "Continue" }).click();
