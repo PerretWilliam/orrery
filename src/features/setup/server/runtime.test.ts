@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const createSetupStore = vi.fn(() => ({ isCompleted: async () => false }));
 const runMigrations = vi.fn(async () => undefined);
+const startDiscovery = vi.fn();
+vi.mock("@/features/repos/server/runtime", () => ({ startDiscovery: () => startDiscovery() }));
 vi.mock("./drizzle-store", () => ({ createSetupStore: (...a: unknown[]) => createSetupStore(...(a as [])) }));
 vi.mock("@/lib/db/instance", () => ({ getDb: () => "db-handle" }));
 vi.mock("@/lib/db/migrate", () => ({ runMigrations: (...a: unknown[]) => runMigrations(...(a as [])) }));
@@ -11,6 +13,7 @@ import { getSetupService } from "./runtime";
 import { startInstance } from "./start";
 
 afterEach(() => {
+  startDiscovery.mockClear();
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
   Reflect.deleteProperty(globalThis, Symbol.for("orrery.setupToken"));
@@ -55,6 +58,7 @@ describe("startInstance", () => {
     await startInstance();
     expect(runMigrations).toHaveBeenCalledWith("db-handle");
     expect(out.mock.calls.join("")).toContain("/setup");
+    expect(startDiscovery).toHaveBeenCalledTimes(1);
   });
   it("does nothing without a database", async () => {
     vi.stubEnv("DATABASE_URL", "");
@@ -62,5 +66,6 @@ describe("startInstance", () => {
     vi.spyOn(process.stdout, "write").mockReturnValue(true);
     await startInstance();
     expect(runMigrations).not.toHaveBeenCalled();
+    expect(startDiscovery).not.toHaveBeenCalled();
   });
 });

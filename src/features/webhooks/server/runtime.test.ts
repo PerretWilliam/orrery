@@ -9,6 +9,8 @@ import { encrypt, parseKeyring } from "@/lib/crypto";
 const KEYS = `k1:${Buffer.alloc(32, 9).toString("base64")}`;
 const store = { secretCiphertext: vi.fn(), claimDelivery: vi.fn() };
 vi.mock("@/lib/db/instance", () => ({ getDb: () => "db" }));
+const discover = vi.fn();
+vi.mock("@/features/repos/server/runtime", () => ({ discover: (...args: unknown[]) => discover(...args) }));
 vi.mock("./drizzle-store", () => ({ createWebhookStore: (db: unknown) => (db === "db" ? store : undefined) }));
 
 import { getWebhookHandler } from "./runtime";
@@ -41,6 +43,15 @@ describe("getWebhookHandler", () => {
     expect(response.status).toBe(200);
     expect(store.claimDelivery).toHaveBeenCalledWith("d-1", "membership", expect.any(Date));
     expect(invalidate).toHaveBeenCalledWith({ username: "hubot" });
+  });
+  it("hands pushes to repository discovery", async () => {
+    store.secretCiphertext.mockResolvedValue(encrypt("hook-secret", parseKeyring(KEYS), SETTINGS_CONTEXT.webhookSecret));
+    store.claimDelivery.mockResolvedValue(true);
+    const body = JSON.stringify({ ref: "refs/heads/main", repository: { name: "web", owner: { login: "acme" }, default_branch: "main" } });
+    const request = signed(body, "hook-secret");
+    request.headers.set("x-github-event", "push");
+    expect((await getWebhookHandler()(request)).status).toBe(200);
+    expect(discover).toHaveBeenCalledWith({ owner: "acme", name: "web" });
   });
   it("refuses a secret that is bound to another column (a copied ciphertext)", async () => {
     store.secretCiphertext.mockResolvedValue(encrypt("hook-secret", parseKeyring(KEYS), SETTINGS_CONTEXT.clientSecret));

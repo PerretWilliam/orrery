@@ -13,6 +13,7 @@ function setup(overrides: Partial<WebhookDeps> = {}) {
     secret: vi.fn(async () => SECRET as string | null),
     claim: vi.fn(async (id: string) => (seen.has(id) ? false : (seen.add(id), true))),
     invalidate: vi.fn(),
+    discover: vi.fn(),
     now: () => NOW,
     ...overrides,
   };
@@ -42,14 +43,61 @@ describe("a genuine delivery", () => {
     await handle(delivery({ action: "removed" }, { event: "member" }));
     expect(deps.invalidate).toHaveBeenCalledWith({});
   });
-  it("answers 200 without acting for events it does not subscribe to, such as push and ping", async () => {
+  it("answers 200 without acting for events it does not subscribe to, such as ping", async () => {
     const { handle, deps } = setup();
-    for (const event of ["push", "ping"]) {
+    for (const event of ["ping", "star"]) {
       const response = await handle(delivery({ zen: "x" }, { event, id: `d-${event}` }));
       expect(await response.json()).toEqual({ ok: true, event, ignored: true });
     }
     expect(deps.claim).not.toHaveBeenCalled();
     expect(deps.invalidate).not.toHaveBeenCalled();
+    expect(deps.discover).not.toHaveBeenCalled();
+  });
+  it("asks discovery to look again at everything when the App's repositories change, besides invalidating", async () => {
+    for (const event of ["installation", "installation_repositories", "repository"]) {
+      const { handle, deps } = setup();
+      await handle(delivery({ action: "created", repository }, { event, id: `d-${event.replace("_", "-")}` }));
+      expect(deps.discover).toHaveBeenCalledExactlyOnceWith("all");
+      expect(deps.invalidate).toHaveBeenCalled();
+    }
+  });
+  it("does not trigger discovery for events that cannot change which repositories there are", async () => {
+    const { handle, deps } = setup();
+    await handle(delivery(member));
+    expect(deps.discover).not.toHaveBeenCalled();
+  });
+});
+
+describe("push", () => {
+  const push = (over = {}) => ({ ref: "refs/heads/main", repository: { ...repository, default_branch: "main" }, ...over });
+
+  it("asks discovery to look again at the repository, and leaves the permissions alone", async () => {
+    const { handle, deps } = setup();
+    const response = await handle(delivery(push(), { event: "push" }));
+    expect(await response.json()).toEqual({ ok: true, event: "push", discovering: true });
+    expect(deps.discover).toHaveBeenCalledExactlyOnceWith({ owner: "acme", name: "web" });
+    expect(deps.invalidate).not.toHaveBeenCalled();
+    expect(deps.claim).toHaveBeenCalledWith("d-1", "push", NOW);
+  });
+  it("ignores a push to another branch or a tag, and a payload of another shape", async () => {
+    const { handle, deps } = setup();
+    for (const [i, payload] of [push({ ref: "refs/heads/feature" }), push({ ref: "refs/tags/main" }), { zen: "x" }].entries()) {
+      const response = await handle(delivery(payload, { event: "push", id: `p-${i}` }));
+      expect(await response.json()).toEqual({ ok: true, event: "push", discovering: false });
+    }
+    expect(deps.discover).not.toHaveBeenCalled();
+  });
+  it("is acted on once per delivery id", async () => {
+    const { handle, deps } = setup();
+    await handle(delivery(push(), { event: "push" }));
+    const again = await handle(delivery(push(), { event: "push" }));
+    expect(await again.json()).toEqual({ ok: true, event: "push", duplicate: true });
+    expect(deps.discover).toHaveBeenCalledTimes(1);
+  });
+  it("is refused without a valid signature, like everything else", async () => {
+    const { handle, deps } = setup();
+    expect((await handle(delivery(push(), { event: "push", secret: "other" }))).status).toBe(401);
+    expect(deps.discover).not.toHaveBeenCalled();
   });
 });
 

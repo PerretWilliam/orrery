@@ -7,12 +7,24 @@ export type RepoRef = { owner: string; name: string };
 
 export type RepoPermission = "none" | "read" | "triage" | "write" | "maintain" | "admin";
 
-export type RepoSummary = RepoRef & { defaultBranch: string; isPrivate: boolean };
+export type RepoSummary = RepoRef & {
+  githubId: number;
+  installationId: number;
+  defaultBranch: string;
+  isPrivate: boolean;
+  archived: boolean;
+};
 
-export type FileContent = { content: string; etag: string };
+/** An account (organization or user) where the GitHub App is installed. */
+export type InstallationSummary = { id: number; accountLogin: string; accountType: string; suspended: boolean };
+
+/** `unchanged`: the ETag the caller sent still matches. `absent`: there is no such file on the default branch. */
+export type FileResult = { kind: "found"; content: string; etag: string; sha: string } | { kind: "unchanged" } | { kind: "absent" };
 
 export interface GitProviderInterface {
-  /** Repositories the app installation can see. */
+  /** Installations of the App, suspended ones included (flagged). */
+  listInstallations(): Promise<InstallationSummary[]>;
+  /** Repositories of every active installation. Throws if any installation cannot be listed: a partial list is never returned. */
   listRepositories(): Promise<RepoSummary[]>;
   /** Explicit permission of a user on a repository (public-repo implicit read is NOT counted). */
   getUserPermission(repo: RepoRef, username: string): Promise<RepoPermission>;
@@ -22,6 +34,6 @@ export interface GitProviderInterface {
   isOrgMember(org: string, login: string): Promise<boolean>;
   /** Is `login` a member of the team `org/teamSlug`? */
   isTeamMember(org: string, teamSlug: string, login: string): Promise<boolean>;
-  /** File at the root of the default branch; null when absent or unchanged (ETag match). */
-  getFile(repo: RepoRef, path: string, etag?: string): Promise<FileContent | null>;
+  /** File at the root of the default branch. With `etag`, an unchanged file is reported as such instead of being sent again. */
+  getFile(repo: RepoRef, path: string, etag?: string): Promise<FileResult>;
 }

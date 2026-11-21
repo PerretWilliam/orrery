@@ -5,6 +5,7 @@ import { parseConfig } from "./parse-config";
 // Released codes are never renamed, reused or removed: adding one is fine, changing this list's existing entries is not.
 const RELEASED = [
   "config_alias_limit",
+  "config_duplicate_file",
   "config_duplicate_key",
   "config_duplicate_page_id",
   "config_forbidden_key",

@@ -19,6 +19,7 @@ export const CONFIG_ERRORS = {
   config_invalid_value: { fix: "Change the value to one that matches the JSON Schema for this field." },
   config_unknown_source: { fix: "Declare the source under `sources`, or point the widget at an existing source id." },
   config_duplicate_page_id: { fix: "Give each page a unique `id`." },
+  config_duplicate_file: { fix: "Delete .repo-hub.yml, or merge it into .hub.yml: when both exist, .hub.yml is the one used." },
   config_limit_exceeded: { fix: "Remove sources or widgets until the config is within the documented limits." },
 } as const;
 
