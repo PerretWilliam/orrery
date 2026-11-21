@@ -49,7 +49,7 @@ export const keyringFromEnv = (env: Record<string, string | undefined> = process
 
 export function encrypt(plaintext: string, keyring: Keyring, context: string): string {
   const iv = randomBytes(IV_BYTES);
-  const cipher = createCipheriv(ALGORITHM, keyring.keys.get(keyring.activeId) as Buffer, iv);
+  const cipher = createCipheriv(ALGORITHM, keyring.keys.get(keyring.activeId) as Buffer, iv, { authTagLength: TAG_BYTES });
   cipher.setAAD(Buffer.from(context));
   const data = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final(), cipher.getAuthTag()]);
   return ["v1", keyring.activeId, iv.toString("base64url"), data.toString("base64url")].join(".");
@@ -70,7 +70,7 @@ export function decrypt(ciphertext: string, keyring: Keyring, context: string): 
   if (!key) throw new CryptoError("crypto_unknown_key");
   if (iv.length !== IV_BYTES || data.length < TAG_BYTES) throw new CryptoError("crypto_malformed");
   try {
-    const decipher = createDecipheriv(ALGORITHM, key, iv);
+    const decipher = createDecipheriv(ALGORITHM, key, iv, { authTagLength: TAG_BYTES });
     decipher.setAAD(Buffer.from(context));
     decipher.setAuthTag(data.subarray(data.length - TAG_BYTES));
     return Buffer.concat([decipher.update(data.subarray(0, data.length - TAG_BYTES)), decipher.final()]).toString("utf8");

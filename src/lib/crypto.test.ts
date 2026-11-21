@@ -116,6 +116,14 @@ describe("encrypt and decrypt", () => {
       expect(codeOf(() => decrypt(bad.join("."), k, "ctx"))).toBe("crypto_tampered");
     }
   });
+  it("refuses a value whose tag was truncated to a shorter one", () => {
+    const k = ring();
+    const [v, id, iv, data] = encrypt("hello world", k, "ctx").split(".");
+    const bytes = Buffer.from(data, "base64url");
+    // Drop 12 of the 16 tag bytes: a 4-byte tag must never be accepted.
+    const truncated = Buffer.concat([bytes.subarray(0, bytes.length - 16), bytes.subarray(bytes.length - 16, bytes.length - 12)]);
+    expect(codeOf(() => decrypt([v, id, iv, truncated.toString("base64url")].join("."), k, "ctx"))).toBe("crypto_tampered");
+  });
   it("refuses a value copied to another context", () => {
     const k = ring();
     expect(codeOf(() => decrypt(encrypt("v", k, "table.a"), k, "table.b"))).toBe("crypto_tampered");
