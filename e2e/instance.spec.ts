@@ -75,8 +75,9 @@ test.describe("once the instance is set up", () => {
   test("the pages of a project are tabs, and the hub reopens where the user left", async ({ browser }) => {
     const { context, page } = await signedIn(browser, "alice");
     await page.goto("/p/acme/web");
-    await expect(page).toHaveURL(/\/p\/acme\/web\/overview$/);
-    await page.getByRole("navigation", { name: "Pages" }).getByRole("link", { name: "Operations" }).click();
+    const pages = page.getByRole("navigation", { name: "Pages" });
+    await expect(pages.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
+    await pages.getByRole("link", { name: "Operations" }).click();
     await expect(page).toHaveURL(/\/p\/acme\/web\/ops$/);
     await expect.poll(async () => (await context.cookies()).some((c) => c.name === "orrery_last")).toBe(true);
 
