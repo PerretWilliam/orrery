@@ -1,7 +1,8 @@
 import type { PermissionScope } from "@/features/access/domain/capabilities";
+import type { RepoRef } from "@/features/repos/domain/git-provider";
 import { parseDeliveryHeaders } from "../domain/delivery";
 import { WEBHOOK_STATUS, webhookIssue, type WebhookIssue } from "../domain/errors";
-import { invalidationScopes, isHandledEvent } from "../domain/invalidation";
+import { defaultBranchPush, invalidationScopes, isHandledEvent, PUSH_EVENT, REPOSITORY_SET_EVENTS } from "../domain/invalidation";
 import { verifySignature } from "../domain/signature";
 import { readCapped } from "./body";
 
@@ -11,6 +12,8 @@ export type WebhookDeps = {
   /** Records the delivery id; `false` when it was already processed. */
   claim: (deliveryId: string, event: string, now: Date) => Promise<boolean>;
   invalidate: (scope: PermissionScope) => void;
+  /** Asks discovery to look again at one repository, or at all of them. Must not throw and must not make the answer wait. */
+  discover: (target: RepoRef | "all") => void;
   now: () => Date;
 };
 
@@ -36,7 +39,8 @@ export function createWebhookHandler(deps: WebhookDeps) {
 
     const headers = parseDeliveryHeaders(request.headers);
     if ("code" in headers) return refuse(headers);
-    if (!isHandledEvent(headers.event)) return accept({ event: headers.event, ignored: true });
+    const isPush = headers.event === PUSH_EVENT;
+    if (!isPush && !isHandledEvent(headers.event)) return accept({ event: headers.event, ignored: true });
 
     let payload: unknown;
     try {
@@ -47,6 +51,13 @@ export function createWebhookHandler(deps: WebhookDeps) {
 
     if (!(await deps.claim(headers.deliveryId, headers.event, deps.now()))) return accept({ event: headers.event, duplicate: true });
 
+    if (isPush) {
+      const repo = defaultBranchPush(payload);
+      if (repo) deps.discover(repo);
+      return accept({ event: headers.event, discovering: repo !== null });
+    }
+
+    if ((REPOSITORY_SET_EVENTS as readonly string[]).includes(headers.event)) deps.discover("all");
     const scopes = invalidationScopes(headers.event, payload);
     for (const scope of scopes) deps.invalidate(scope);
     return accept({ event: headers.event, invalidated: scopes.length });

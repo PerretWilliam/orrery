@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HANDLED_EVENTS, invalidationScopes, isHandledEvent } from "./invalidation";
+import { defaultBranchPush, HANDLED_EVENTS, invalidationScopes, isHandledEvent } from "./invalidation";
 
 const repository = { name: "Web", owner: { login: "Acme" } };
 const REPO = { owner: "Acme", name: "Web" };
@@ -53,5 +53,18 @@ describe("invalidationScopes", () => {
   });
   it.each([null, undefined, "text", 42, [], true])("falls back to everything for the payload %j", (payload) => {
     for (const event of HANDLED_EVENTS) expect(invalidationScopes(event, payload)).toEqual(EVERYTHING);
+  });
+});
+
+describe("defaultBranchPush", () => {
+  const payload = (ref: string) => ({ ref, repository: { name: "web", owner: { login: "acme" }, default_branch: "main" } });
+  it("names the repository of a push to its default branch", () => {
+    expect(defaultBranchPush(payload("refs/heads/main"))).toEqual({ owner: "acme", name: "web" });
+  });
+  it.each([[payload("refs/heads/dev")], [payload("refs/tags/main")], [{ ref: "refs/heads/main" }], [null], ["push"]])("is null for %j", (value) => {
+    expect(defaultBranchPush(value)).toBeNull();
+  });
+  it("is null when the default branch is missing, so a push is never guessed to be on it", () => {
+    expect(defaultBranchPush({ ref: "refs/heads/main", repository: { name: "web", owner: { login: "acme" } } })).toBeNull();
   });
 });

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { PermissionScope } from "@/features/access/domain/capabilities";
+import { isDefaultBranchPush } from "@/features/repos/domain/discovery";
+import type { RepoRef } from "@/features/repos/domain/git-provider";
 
 const text = z.string().min(1);
 const repository = z.object({ name: text, owner: z.object({ login: text }) });
@@ -49,4 +51,18 @@ export function invalidationScopes(event: string, payload: unknown): PermissionS
     default:
       return [EVERYTHING];
   }
+}
+
+/** `push` is not about access: it tells discovery that a config file may have changed. */
+export const PUSH_EVENT = "push";
+
+/** Events after which the set of repositories the App can see may have changed: discovery looks at all of them again. */
+export const REPOSITORY_SET_EVENTS = ["installation", "installation_repositories", "repository"] as const;
+
+const Push = z.object({ ref: z.string(), repository: z.object({ name: text, owner: z.object({ login: text }), default_branch: text }) });
+
+/** The repository of a push to its default branch; `null` for any other push or a payload of another shape. */
+export function defaultBranchPush(payload: unknown): RepoRef | null {
+  const found = Push.safeParse(payload);
+  return found.success && isDefaultBranchPush(found.data.ref, found.data.repository.default_branch) ? toRepo(found.data.repository) : null;
 }

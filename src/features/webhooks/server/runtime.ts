@@ -1,4 +1,5 @@
 import { invalidatePermissions } from "@/features/access/server/registry";
+import { discover } from "@/features/repos/server/runtime";
 import { SETTINGS_CONTEXT } from "@/features/setup/server/service";
 import { decrypt, keyringFromEnv } from "@/lib/crypto";
 import { getDb } from "@/lib/db/instance";
@@ -15,6 +16,7 @@ export function getWebhookHandler() {
     },
     claim: (deliveryId, event, now) => store.claimDelivery(deliveryId, event, now),
     invalidate: invalidatePermissions,
+    discover,
     now: () => new Date(),
   });
 }
