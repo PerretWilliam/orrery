@@ -1,6 +1,6 @@
 import type { GitProviderInterface, RepoPermission, RepoRef } from "@/features/repos/domain/git-provider";
 import { log } from "@/lib/logger";
-import { can, capabilitiesOf, isRepoPermission, repoKey, userKey, type Capability } from "../domain/capabilities";
+import { can, capabilitiesOf, isRepoPermission, repoKey, userKey, type Capability, type PermissionScope } from "../domain/capabilities";
 
 export const PERMISSION_TTL_MS = 5 * 60_000;
 export const PERMISSION_TIMEOUT_MS = 5_000;
@@ -74,7 +74,7 @@ export function createPermissionService({ provider, now = Date.now, ttlMs = PERM
     capabilities: async (repo: RepoRef, username: string) => capabilitiesOf(await permissionOf(repo, username)),
     can: async (repo: RepoRef, username: string, capability: Capability) => can(await permissionOf(repo, username), capability),
     /** Forget what we know about a repository, a user, both, or (no argument) everyone. Called by the webhook handlers. */
-    invalidate(scope: { repo?: RepoRef; username?: string } = {}) {
+    invalidate(scope: PermissionScope = {}) {
       generation += 1;
       running.clear();
       const repo = scope.repo === undefined ? undefined : repoKey(scope.repo);

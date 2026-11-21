@@ -32,3 +32,6 @@ export function can(permission: unknown, capability: Capability): boolean {
 /** GitHub names are case-insensitive, so the cache and the policy must not tell `Acme/Web` and `acme/web` apart. */
 export const repoKey = (repo: RepoRef) => `${repo.owner}/${repo.name}`.toLowerCase();
 export const userKey = (username: string) => username.toLowerCase();
+
+/** What to forget in the permission cache: a repository, a user, both, or (empty) everything. */
+export type PermissionScope = { repo?: RepoRef; username?: string };
