@@ -15,6 +15,8 @@ export const coverageExclude = [
   "src/cli/orrery.ts",
   // Drizzle implementation of the setup store: SQL only, exercised on a real Postgres by tests/integration/setup-store.test.ts.
   "src/features/setup/server/drizzle-store.ts",
+  // Drizzle implementation of the auth store: SQL only, exercised on a real Postgres by tests/integration/auth-store.test.ts.
+  "src/features/auth/server/drizzle-store.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];

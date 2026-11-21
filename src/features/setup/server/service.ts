@@ -11,6 +11,7 @@ export const SETTINGS_CONTEXT = {
   clientSecret: "instance_settings.client_secret",
   privateKey: "instance_settings.private_key",
   webhookSecret: "instance_settings.webhook_secret",
+  authSecret: "instance_settings.auth_secret",
 } as const;
 
 export const SESSION_TTL_MS = 30 * 60 * 1000;

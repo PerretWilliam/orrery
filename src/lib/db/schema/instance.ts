@@ -18,6 +18,8 @@ export const instanceSettings = pgTable(
     privateKeyCiphertext: text("private_key_ciphertext"),
     webhookSecretCiphertext: text("webhook_secret_ciphertext"),
     encryptionKeyId: text("encryption_key_id"),
+    // Secret Better Auth signs cookies and encrypts OAuth tokens with. Generated on first use, never typed by a person.
+    authSecretCiphertext: text("auth_secret_ciphertext"),
     // Hash of the secret handed to the browser that finished setup; the first GitHub sign-in presenting it becomes admin.
     adminClaimHash: text("admin_claim_hash"),
     adminClaimExpiresAt: timestamp("admin_claim_expires_at", { withTimezone: true }),
