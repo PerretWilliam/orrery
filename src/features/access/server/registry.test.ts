@@ -1,19 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PermissionService } from "./permissions";
-import { getPermissionService, invalidatePermissions, registerPermissionService } from "./registry";
+import type { AccessPolicy } from "./policy";
+import { getRegisteredAccessPolicy, invalidatePermissions, registerAccessPolicy } from "./registry";
 
-afterEach(() => registerPermissionService(undefined));
+afterEach(() => registerAccessPolicy(undefined));
 
-describe("permission service registry", () => {
-  it("does nothing while no service is registered", () => {
-    expect(getPermissionService()).toBeUndefined();
+describe("access policy registry", () => {
+  it("does nothing while no policy is registered", () => {
+    expect(getRegisteredAccessPolicy()).toBeUndefined();
     expect(() => invalidatePermissions({ username: "octocat" })).not.toThrow();
   });
-  it("forwards invalidations to the registered service", () => {
+  it("forwards invalidations to the registered policy", () => {
     const invalidate = vi.fn();
-    const service = { invalidate } as unknown as PermissionService;
-    registerPermissionService(service);
-    expect(getPermissionService()).toBe(service);
+    const policy = { invalidate } as unknown as AccessPolicy;
+    registerAccessPolicy(policy);
+    expect(getRegisteredAccessPolicy()).toBe(policy);
     invalidatePermissions({ username: "octocat" });
     invalidatePermissions();
     expect(invalidate.mock.calls).toEqual([[{ username: "octocat" }], [{}]]);

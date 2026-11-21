@@ -12,6 +12,7 @@ const store = {
   deleteSession: vi.fn(),
 };
 const setup = { claimAdmin: vi.fn() };
+const access = { canSignIn: vi.fn() };
 const auth = { api: { getSession: vi.fn() } };
 const createAuth = vi.fn((...[]: [unknown]) => auth);
 const githubAccessToken = vi.fn();
@@ -19,6 +20,7 @@ vi.mock("@/lib/db/instance", () => ({ getDb: () => "db-handle" }));
 vi.mock("./drizzle-store", () => ({ createAuthStore: (db: unknown) => (db === "db-handle" ? store : null) }));
 vi.mock("better-auth/adapters/drizzle", () => ({ drizzleAdapter: (db: unknown, options: unknown) => ({ adapter: { db, options } }) }));
 vi.mock("@/features/setup/server/runtime", () => ({ getSetupService: () => setup }));
+vi.mock("@/features/access/server/runtime", () => ({ getAccessPolicy: () => access }));
 vi.mock("./auth-secret", () => ({ loadAuthSecret: async () => "stored-secret" }));
 vi.mock("./better-auth", () => ({ createAuth: (config: unknown) => createAuth(config), githubAccessToken: (...args: unknown[]) => githubAccessToken(...args) }));
 
@@ -78,6 +80,17 @@ describe("getAuthContext", () => {
     setup.claimAdmin.mockResolvedValue(true);
     expect(await service.authorize("Octo", "secret")).toBe(true);
     expect(setup.claimAdmin).toHaveBeenCalledWith("secret", "octo");
+  });
+
+  it("asks the access policy about everybody else", async () => {
+    await getAuthContext(headers("allowlist.test"));
+    const { service } = createAuth.mock.calls[0][0] as { service: { authorize: (login: string, claim?: string) => Promise<boolean> } };
+    store.isAdmin.mockResolvedValue(false);
+    setup.claimAdmin.mockResolvedValue(false);
+    access.canSignIn.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    expect(await service.authorize("Alice")).toBe(true);
+    expect(access.canSignIn).toHaveBeenCalledWith("alice");
+    expect(await service.authorize("mallory")).toBe(false);
   });
 
   it("renews GitHub tokens through Better Auth, and suspends when it fails", async () => {

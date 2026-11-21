@@ -5,7 +5,7 @@ import type { AuthStore, UserState } from "./store";
 const NOW = new Date("2026-06-15T12:00:00Z");
 const DAY = 24 * 60 * 60 * 1000;
 
-function setup({ users = {} as Record<string, UserState>, admins = [] as string[], claim = false, token = "ghu_token" as string | Error } = {}) {
+function setup({ users = {} as Record<string, UserState>, admins = [] as string[], claim = false, allowed = [] as string[], token = "ghu_token" as string | Error } = {}) {
   const calls = { suspend: [] as [string, Date][], resume: [] as string[], deleted: [] as string[], claimed: [] as [string | undefined, string][] };
   const store = {
     isAdmin: vi.fn(async (login: string) => admins.includes(login)),
@@ -22,7 +22,8 @@ function setup({ users = {} as Record<string, UserState>, admins = [] as string[
     calls.claimed.push([secret, login]);
     return claim;
   });
-  return { service: createAuthService({ store, claimAdmin, fetchAccessToken, now: () => NOW }), store, calls, fetchAccessToken, claimAdmin };
+  const canSignIn = vi.fn(async (login: string) => allowed.includes(login));
+  return { service: createAuthService({ store, claimAdmin, canSignIn, fetchAccessToken, now: () => NOW }), store, calls, fetchAccessToken, claimAdmin, canSignIn };
 }
 
 describe("authorize (fail closed)", () => {
@@ -32,14 +33,25 @@ describe("authorize (fail closed)", () => {
     expect(claimAdmin).not.toHaveBeenCalled();
   });
   it("lets the holder of the setup claim in, with the lowercased login", async () => {
-    const { service, calls } = setup({ claim: true });
+    const { service, calls, canSignIn } = setup({ claim: true });
     expect(await service.authorize("Octo", "secret")).toBe(true);
     expect(calls.claimed).toEqual([["secret", "octo"]]);
+    expect(canSignIn).not.toHaveBeenCalled();
+  });
+  it("lets in whoever the admin's sign-in allowlist lets in, asked with the lowercased login", async () => {
+    const { service, canSignIn } = setup({ allowed: ["alice"] });
+    expect(await service.authorize("Alice", undefined)).toBe(true);
+    expect(canSignIn).toHaveBeenCalledWith("alice");
   });
   it("refuses everybody else", async () => {
-    const { service } = setup({ claim: false });
+    const { service } = setup({ claim: false, allowed: ["alice"] });
     expect(await service.authorize("stranger", "wrong")).toBe(false);
     expect(await service.authorize("stranger", undefined)).toBe(false);
+  });
+  it("refuses when the allowlist check itself fails", async () => {
+    const { service, canSignIn } = setup();
+    canSignIn.mockRejectedValue(new Error("db down"));
+    await expect(service.authorize("alice", undefined)).rejects.toThrow("db down");
   });
 });
 

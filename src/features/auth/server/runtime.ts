@@ -1,4 +1,5 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { getAccessPolicy } from "@/features/access/server/runtime";
 import { instanceOrigin } from "@/features/setup/server/http";
 import { getSetupService } from "@/features/setup/server/runtime";
 import { SETTINGS_CONTEXT } from "@/features/setup/server/service";
@@ -25,6 +26,7 @@ async function build(baseURL: string): Promise<AuthContext | null> {
   const service = createAuthService({
     store,
     claimAdmin: (secret, login) => setup.claimAdmin(secret, login),
+    canSignIn: (login) => getAccessPolicy().canSignIn(login),
     fetchAccessToken: (userId) => githubAccessToken(holder.auth as Auth, store, userId),
     now: () => new Date(),
   });

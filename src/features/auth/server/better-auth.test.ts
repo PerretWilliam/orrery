@@ -70,6 +70,7 @@ function setup() {
       admins.add(login);
       return true;
     },
+    canSignIn: async () => false,
     fetchAccessToken: async () => "unused",
     now: () => NOW,
   });
@@ -167,7 +168,7 @@ describe("cookies and tokens", () => {
   });
 
   it("marks cookies Secure when the public URL is HTTPS", async () => {
-    const service = createAuthService({ store: store(), claimAdmin: async () => true, fetchAccessToken: async () => "", now: () => NOW });
+    const service = createAuthService({ store: store(), claimAdmin: async () => true, canSignIn: async () => false, fetchAccessToken: async () => "", now: () => NOW });
     const secure = createAuth({ database: memoryAdapter(rows), clientId: "i", clientSecret: "s", secret: "s".repeat(32), baseURL: "https://hub.example.com", service });
     const start = await secure.api.signInSocial({ body: { provider: "github", callbackURL: "/" }, asResponse: true });
     expect(start.headers.getSetCookie().every((c) => c.includes("Secure") && c.includes("HttpOnly"))).toBe(true);

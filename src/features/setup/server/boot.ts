@@ -3,13 +3,15 @@ import type { ResolvedToken } from "../domain/token";
 import type { SetupStore } from "./store";
 
 /**
- * At startup: apply migrations, then, if the instance has not been set up, print how to do it.
+ * At startup: apply migrations, seed the access policy from the environment, then, if the instance has not been set up, print how to do it.
  * The generated token is in the message on purpose (the log field filter would hide it): it is meant to be read
  * in the container logs. A token from ORRERY_SETUP_TOKEN is never printed.
  */
 export async function bootInstance(deps: {
   databaseUrl: string | undefined;
   migrate: () => Promise<void>;
+  /** Admins and sign-in allowlist from the environment. Runs on every start, after the migrations. */
+  seedAccess: () => Promise<void>;
   store: () => SetupStore;
   token: ResolvedToken;
 }): Promise<void> {
@@ -18,6 +20,7 @@ export async function bootInstance(deps: {
     return;
   }
   await deps.migrate();
+  await deps.seedAccess();
   if (await deps.store().isCompleted()) return;
   if (deps.token.warning) log("warn", deps.token.warning);
   log(

@@ -16,6 +16,12 @@ export interface GitProviderInterface {
   listRepositories(): Promise<RepoSummary[]>;
   /** Explicit permission of a user on a repository (public-repo implicit read is NOT counted). */
   getUserPermission(repo: RepoRef, username: string): Promise<RepoPermission>;
+  /** Is `login` a member of an account (organization or user) where the GitHub App is installed? The default sign-in rule. */
+  isInstallationMember(login: string): Promise<boolean>;
+  /** Is `login` a member of the organization? */
+  isOrgMember(org: string, login: string): Promise<boolean>;
+  /** Is `login` a member of the team `org/teamSlug`? */
+  isTeamMember(org: string, teamSlug: string, login: string): Promise<boolean>;
   /** File at the root of the default branch; null when absent or unchanged (ETag match). */
   getFile(repo: RepoRef, path: string, etag?: string): Promise<FileContent | null>;
 }
