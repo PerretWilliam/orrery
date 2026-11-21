@@ -18,5 +18,11 @@
     "doneBody": "Install it on the accounts and organizations whose repositories you want to see. Then sign in with GitHub in this browser: the first sign-in becomes the instance admin.",
     "doneInstall": "Install the GitHub App",
     "errorTitle": "Something went wrong"
+  },
+  "Auth": {
+    "title": "Sign in to Orrery",
+    "intro": "Orrery shows what GitHub lets you see. Sign in with the GitHub account you use for your repositories.",
+    "submit": "Sign in with GitHub",
+    "errorTitle": "Sign-in problem"
   }
 }

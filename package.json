@@ -25,6 +25,7 @@
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "@tanstack/react-query": "^5.108.2",
+    "better-auth": "1.7.27",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
@@ -87,7 +88,10 @@
     "node": ">=24"
   },
   "overrides": {
-    "qs": "^6.16.1"
+    "qs": "^6.16.1",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.0"
+    }
   },
   "bin": {
     "orrery": "dist/cli/orrery.cjs"

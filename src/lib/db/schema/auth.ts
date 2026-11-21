@@ -13,6 +13,8 @@ export const user = pgTable(
     image: text("image"),
     githubId: bigint("github_id", { mode: "number" }),
     login: text("login"),
+    // Set when GitHub refuses to renew this user's tokens: sessions and agent tokens stay suspended until the next sign-in.
+    authSuspendedAt: timestamp("auth_suspended_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
