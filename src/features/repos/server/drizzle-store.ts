@@ -3,6 +3,7 @@ import type { ConfigIssue } from "@/features/config/domain/errors";
 import type { Db } from "@/lib/db/client";
 import { githubInstallations, instanceSettings, repositories } from "@/lib/db/schema";
 import { DEFAULT_POLL_SECONDS, type ConfigFile } from "../domain/discovery";
+import type { ProjectRow, ProjectStore } from "./projects";
 import type { RepoStore, StoredRepo } from "./store";
 
 type Row = typeof repositories.$inferSelect;
@@ -88,6 +89,31 @@ export function createRepoStore(db: Db): RepoStore {
         .update(repositories)
         .set({ configFile: null, configSha: null, configEtag: null, configError: null, lastValidConfig: null, configCheckedAt: now, updatedAt: now })
         .where(and(isNotNull(repositories.configFile), seen.length === 0 ? undefined : notInArray(repositories.githubId, [...seen])));
+    },
+  };
+}
+
+const project = (row: Row): ProjectRow => ({
+  owner: row.owner,
+  name: row.name,
+  isPrivate: row.isPrivate,
+  archived: row.archived,
+  config: row.lastValidConfig,
+  issues: row.configError as ConfigIssue[] | null,
+});
+
+/** Drizzle implementation of `ProjectStore`; excluded from unit coverage like `createRepoStore`. */
+export function createProjectStore(db: Db): ProjectStore {
+  return {
+    async listConfigured() {
+      return (await db.select().from(repositories).where(isNotNull(repositories.configFile))).map(project);
+    },
+    async view(repo) {
+      const [row] = await db
+        .select()
+        .from(repositories)
+        .where(and(isNotNull(repositories.configFile), sql`lower(${repositories.owner}) = lower(${repo.owner}) and lower(${repositories.name}) = lower(${repo.name})`));
+      return row ? project(row) : null;
     },
   };
 }

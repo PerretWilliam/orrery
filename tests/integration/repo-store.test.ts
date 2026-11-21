@@ -1,7 +1,7 @@
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { createRepoStore } from "@/features/repos/server/drizzle-store";
+import { createProjectStore, createRepoStore } from "@/features/repos/server/drizzle-store";
 import type { ConfigState } from "@/features/repos/server/store";
 import type { RepoSummary } from "@/features/repos/domain/git-provider";
 import { createDb } from "@/lib/db/client";
@@ -112,5 +112,32 @@ describe("credentials and settings", () => {
   it("need a key to give credentials", async () => {
     await ctx.db.insert(s.instanceSettings).values({ id: 1, setupCompletedAt: T0, githubAppId: "123" });
     expect(await store.credentials()).toBeNull();
+  });
+});
+
+describe("the project store", () => {
+  beforeEach(() => store.saveInstallations([installation], T0));
+  const projects = () => createProjectStore(ctx.db);
+
+  it("lists the repositories that have a config file, with the last valid config and the issues", async () => {
+    const issues = [{ code: "config_required" as const, path: "x", message: "m", fix: "f" }];
+    await store.save(repo(1), state({ lastValidConfig: config }), T0);
+    await store.save(repo(2), state({ configFile: null, configEtag: null, configSha: null }), T0);
+    await store.save(repo(3, { isPrivate: false, archived: true }), state({ configIssues: issues }), T0);
+    const rows = await projects().listConfigured();
+    expect(rows.map((r) => [r.name, r.isPrivate, r.archived, r.config, r.issues])).toEqual(
+      expect.arrayContaining([
+        ["r1", true, false, { version: 1 }, null],
+        ["r3", false, true, null, issues],
+      ]),
+    );
+    expect(rows).toHaveLength(2);
+  });
+  it("views one by owner and name without case, and not one without a config file", async () => {
+    await store.save(repo(1, { owner: "Acme", name: "Web" }), state({ lastValidConfig: config }), T0);
+    await store.save(repo(2), state({ configFile: null, configEtag: null, configSha: null }), T0);
+    expect(await projects().view({ owner: "acme", name: "web" })).toMatchObject({ owner: "Acme", name: "Web", config: { version: 1 } });
+    expect(await projects().view({ owner: "acme", name: "r2" })).toBeNull();
+    expect(await projects().view({ owner: "acme", name: "nope" })).toBeNull();
   });
 });

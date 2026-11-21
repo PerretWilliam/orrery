@@ -1,10 +1,11 @@
-import { useTranslations } from "next-intl";
+import { Suspense } from "react";
+import { Brand, HomeContent } from "@/features/repos/components/home-content";
 
+// Request-time data (cookies, database) is read inside the Suspense boundary, so the shell stays static.
 export default function Home() {
-  const t = useTranslations("Home");
   return (
-    <main className="flex flex-1 items-center justify-center">
-      <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
-    </main>
+    <Suspense fallback={<Brand />}>
+      <HomeContent />
+    </Suspense>
   );
 }

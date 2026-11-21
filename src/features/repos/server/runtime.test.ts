@@ -12,11 +12,17 @@ const discovery = { syncAll: vi.fn(), refresh: vi.fn() };
 const createDiscovery = vi.fn((...[]: [unknown]) => discovery);
 const startPolling = vi.fn((...[]: [unknown]) => () => {});
 vi.mock("@/lib/db/instance", () => ({ getDb: () => "db" }));
-vi.mock("./drizzle-store", () => ({ createRepoStore: (db: unknown) => (db === "db" ? store : undefined) }));
+const projectStore = { listConfigured: vi.fn(), view: vi.fn() };
+const policy = { can: vi.fn() };
+vi.mock("./drizzle-store", () => ({
+  createRepoStore: (db: unknown) => (db === "db" ? store : undefined),
+  createProjectStore: (db: unknown) => (db === "db" ? projectStore : undefined),
+}));
+vi.mock("@/features/access/server/runtime", () => ({ getAccessPolicy: () => policy }));
 vi.mock("./discovery", () => ({ createDiscovery: (deps: unknown) => createDiscovery(deps) }));
 vi.mock("./poller", () => ({ startPolling: (deps: unknown) => startPolling(deps) }));
 
-import { discover, getDiscovery, getGitProvider, startDiscovery } from "./runtime";
+import { discover, getDiscovery, getGitProvider, getProjects, startDiscovery } from "./runtime";
 
 beforeEach(() => vi.stubEnv("ORRERY_ENCRYPTION_KEYS", KEYS));
 afterEach(() => {
@@ -24,7 +30,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.clearAllMocks();
-  for (const name of ["git-provider", "discovery"]) Reflect.deleteProperty(globalThis, Symbol.for(`orrery.${name}`));
+  for (const name of ["git-provider", "discovery", "projects"]) Reflect.deleteProperty(globalThis, Symbol.for(`orrery.${name}`));
 });
 
 describe("getGitProvider", () => {
@@ -118,5 +124,15 @@ describe("startDiscovery", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("getProjects", () => {
+  it("lists what the access policy lets the user view, and is shared by the process", async () => {
+    projectStore.listConfigured.mockResolvedValue([{ owner: "acme", name: "web", isPrivate: false, archived: false, config: null, issues: null }]);
+    policy.can.mockResolvedValue(true);
+    expect((await getProjects().visibleTo("octo")).map((p) => p.name)).toEqual(["web"]);
+    expect(policy.can).toHaveBeenCalledWith(expect.objectContaining({ owner: "acme", name: "web" }), "octo", "view");
+    expect(getProjects()).toBe(getProjects());
   });
 });

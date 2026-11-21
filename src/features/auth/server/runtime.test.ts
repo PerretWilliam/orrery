@@ -24,7 +24,7 @@ vi.mock("@/features/access/server/runtime", () => ({ getAccessPolicy: () => acce
 vi.mock("./auth-secret", () => ({ loadAuthSecret: async () => "stored-secret" }));
 vi.mock("./better-auth", () => ({ createAuth: (config: unknown) => createAuth(config), githubAccessToken: (...args: unknown[]) => githubAccessToken(...args) }));
 
-import { currentUser, getAuthContext } from "./runtime";
+import { currentUser, currentViewer, getAuthContext } from "./runtime";
 
 const app = () => ({ clientId: "Iv1.abc", clientSecretCiphertext: encrypt("the-client-secret", parseKeyring(KEY), "instance_settings.client_secret") });
 const headers = (host = "hub.test", proto: string | null = null) => new Headers({ host, ...(proto ? { "x-forwarded-proto": proto } : {}) });
@@ -123,5 +123,27 @@ describe("currentUser", () => {
     expect(auth.api.getSession).toHaveBeenCalledWith({ headers: requestHeaders });
     store.userState.mockResolvedValue({ login: "octo", suspendedAt: new Date() });
     expect(await currentUser(requestHeaders)).toMatchObject({ ok: false, issue: { code: "auth_refresh_failed" } });
+  });
+});
+
+describe("currentViewer", () => {
+  const session = { id: "s1", userId: "u1", createdAt: new Date(), expiresAt: new Date(Date.now() + 60_000), token: "never-used" };
+
+  it("is null without a valid session", async () => {
+    auth.api.getSession.mockResolvedValue(null);
+    expect(await currentViewer(headers("viewer-anon.test"))).toBeNull();
+    auth.api.getSession.mockResolvedValue({ session, user: { id: "u1" } });
+    store.userState.mockResolvedValue({ login: "octo", suspendedAt: new Date() });
+    expect(await currentViewer(headers("viewer-anon.test"))).toBeNull();
+  });
+  it("gives the user id and GitHub login of a live session", async () => {
+    auth.api.getSession.mockResolvedValue({ session, user: { id: "u1" } });
+    store.userState.mockResolvedValue({ login: "octo", suspendedAt: null });
+    expect(await currentViewer(headers("viewer.test"))).toEqual({ userId: "u1", login: "octo" });
+  });
+  it("is null for a user row without a login", async () => {
+    auth.api.getSession.mockResolvedValue({ session, user: { id: "u1" } });
+    store.userState.mockResolvedValue({ login: null, suspendedAt: null });
+    expect(await currentViewer(headers("viewer-nologin.test"))).toBeNull();
   });
 });

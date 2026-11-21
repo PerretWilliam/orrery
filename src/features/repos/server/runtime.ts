@@ -5,7 +5,9 @@ import { log } from "@/lib/logger";
 import { globalSingleton } from "@/lib/singleton";
 import type { RepoRef } from "../domain/git-provider";
 import { createDiscovery } from "./discovery";
-import { createRepoStore } from "./drizzle-store";
+import { getAccessPolicy } from "@/features/access/server/runtime";
+import { createProjectStore, createRepoStore } from "./drizzle-store";
+import { createProjects } from "./projects";
 import { createGitHubProvider } from "./github";
 import { startPolling } from "./poller";
 
@@ -46,3 +48,7 @@ export const startDiscovery = (): (() => void) =>
       return () => clearTimeout(timer);
     },
   });
+
+/** What the shell shows: the configured repositories the signed-in user may view. */
+export const getProjects = () =>
+  globalSingleton("projects", () => createProjects({ store: createProjectStore(getDb()), canView: (repo, login) => getAccessPolicy().can(repo, login, "view") }));
