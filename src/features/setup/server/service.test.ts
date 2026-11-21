@@ -129,10 +129,16 @@ describe("complete", () => {
     expect(saved).toMatchObject({ githubAppId: "4242", githubAppSlug: "orrery-abc", githubClientId: "Iv1.client", encryptionKeyId: "k1", completedAt: NOW });
     expect(decrypt(saved.clientSecretCiphertext, KEYS, SETTINGS_CONTEXT.clientSecret)).toBe("CLIENT-SECRET-VALUE");
     expect(decrypt(saved.privateKeyCiphertext, KEYS, SETTINGS_CONTEXT.privateKey)).toBe("PRIVATE-KEY-VALUE");
-    expect(decrypt(saved.webhookSecretCiphertext, KEYS, SETTINGS_CONTEXT.webhookSecret)).toBe("WEBHOOK-SECRET-VALUE");
+    expect(decrypt(saved.webhookSecretCiphertext as string, KEYS, SETTINGS_CONTEXT.webhookSecret)).toBe("WEBHOOK-SECRET-VALUE");
     expect(saved.adminClaimHash).toBe(hashClaim(result.claimSecret));
     expect(saved.adminClaimHash).not.toBe(result.claimSecret);
     expect(store.complete).toHaveBeenCalledTimes(1);
+  });
+  it("stores no webhook secret for an App created without a webhook", async () => {
+    const withoutWebhook = { ...CONVERSION, webhook_secret: undefined };
+    const { service, state, session } = setup({ fetch: github({ status: 201, body: withoutWebhook }) });
+    expect(await service.complete(session, manifestState(TOKEN, session), "abcdef1234567890")).toMatchObject({ ok: true });
+    expect(state.saved?.webhookSecretCiphertext).toBeNull();
   });
   it("never writes a credential in clear text, nor in the logs", async () => {
     const out = vi.spyOn(process.stdout, "write").mockReturnValue(true);
