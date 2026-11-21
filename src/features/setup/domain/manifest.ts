@@ -27,16 +27,19 @@ export function baseUrlFrom(input: { publicUrl?: string; host?: string | null; p
   return `${input.proto === "https" ? "https" : "http"}://${input.host}`;
 }
 
-/** Read-only App. Webhooks are active only when the instance is reachable by GitHub (`ORRERY_PUBLIC_URL` set). */
+/**
+ * Read-only App. Webhooks (and the events they carry) are asked for only when the instance is reachable by GitHub
+ * (`ORRERY_PUBLIC_URL` set): GitHub refuses a hook URL it cannot reach, even an inactive one, so without one the
+ * manifest has none and the hub polls instead.
+ */
 export const buildManifest = (baseUrl: string, webhooks: boolean) => ({
   name: "Orrery",
   url: baseUrl,
-  hook_attributes: { url: `${baseUrl}/api/webhooks/github`, active: webhooks },
   redirect_url: `${baseUrl}/setup/github/callback`,
   callback_urls: [`${baseUrl}/api/auth/callback/github`],
   public: false,
   default_permissions: APP_PERMISSIONS,
-  default_events: APP_EVENTS,
+  ...(webhooks ? { hook_attributes: { url: `${baseUrl}/api/webhooks/github`, active: true }, default_events: APP_EVENTS } : {}),
 });
 
 const nonEmpty = z.string().min(1);
@@ -47,15 +50,16 @@ const Conversion = z.object({
   slug: z.string().regex(/^[A-Za-z0-9-]{1,100}$/),
   client_id: nonEmpty,
   client_secret: nonEmpty,
-  webhook_secret: nonEmpty,
+  // Absent when the App was created without a webhook.
+  webhook_secret: nonEmpty.nullish(),
   pem: nonEmpty,
 });
 
-export type AppCredentials = { id: string; slug: string; clientId: string; clientSecret: string; webhookSecret: string; privateKey: string };
+export type AppCredentials = { id: string; slug: string; clientId: string; clientSecret: string; webhookSecret: string | null; privateKey: string };
 
 export function parseConversion(json: unknown): AppCredentials | null {
   const parsed = Conversion.safeParse(json);
   if (!parsed.success) return null;
   const { id, slug, client_id, client_secret, webhook_secret, pem } = parsed.data;
-  return { id: String(id), slug, clientId: client_id, clientSecret: client_secret, webhookSecret: webhook_secret, privateKey: pem };
+  return { id: String(id), slug, clientId: client_id, clientSecret: client_secret, webhookSecret: webhook_secret ?? null, privateKey: pem };
 }

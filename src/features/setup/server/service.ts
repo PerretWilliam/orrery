@@ -98,7 +98,7 @@ export function createSetupService({ store, token, keyring, fetch, now }: SetupD
         githubClientId: credentials.clientId,
         clientSecretCiphertext: encrypt(credentials.clientSecret, keys, SETTINGS_CONTEXT.clientSecret),
         privateKeyCiphertext: encrypt(credentials.privateKey, keys, SETTINGS_CONTEXT.privateKey),
-        webhookSecretCiphertext: encrypt(credentials.webhookSecret, keys, SETTINGS_CONTEXT.webhookSecret),
+        webhookSecretCiphertext: credentials.webhookSecret === null ? null : encrypt(credentials.webhookSecret, keys, SETTINGS_CONTEXT.webhookSecret),
         encryptionKeyId: keys.activeId,
         adminClaimHash: claim.hash,
         adminClaimExpiresAt: claim.expiresAt,

@@ -51,8 +51,11 @@ describe("buildManifest", () => {
     expect([...APP_EVENTS].sort()).toEqual(["member", "membership", "organization", "push", "repository", "team"]);
     expect(manifest.default_events).toEqual(APP_EVENTS);
   });
-  it("turns webhooks off when GitHub cannot reach the instance", () => {
-    expect(buildManifest("http://localhost:3000", false).hook_attributes.active).toBe(false);
+  it("has no webhook at all when GitHub cannot reach the instance, since it refuses even an inactive hook on localhost", () => {
+    const local = buildManifest("http://localhost:3000", false);
+    expect(local).not.toHaveProperty("hook_attributes");
+    expect(local).not.toHaveProperty("default_events");
+    expect(local).toMatchObject({ url: "http://localhost:3000", callback_urls: ["http://localhost:3000/api/auth/callback/github"] });
   });
 });
 
@@ -68,6 +71,10 @@ describe("parseConversion", () => {
       privateKey: "-----BEGIN-----",
     });
   });
+  it("accepts an App without a webhook, and keeps no secret for it", () => {
+    expect(parseConversion({ ...valid, webhook_secret: undefined })?.webhookSecret).toBeNull();
+    expect(parseConversion({ ...valid, webhook_secret: null })?.webhookSecret).toBeNull();
+  });
   it.each([
     ["not an object", "oops"],
     ["null", null],
@@ -81,7 +88,7 @@ describe("parseConversion", () => {
     ["slug too long", { ...valid, slug: "a".repeat(101) }],
     ["empty client id", { ...valid, client_id: "" }],
     ["no client secret", { ...valid, client_secret: undefined }],
-    ["no webhook secret", { ...valid, webhook_secret: undefined }],
+    ["an empty webhook secret", { ...valid, webhook_secret: "" }],
     ["no key", { ...valid, pem: "" }],
   ])("refuses %s", (_name, json) => expect(parseConversion(json)).toBeNull());
 });
