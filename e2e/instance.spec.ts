@@ -79,7 +79,7 @@ test.describe("once the instance is set up", () => {
     await expect(pages.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
     await pages.getByRole("link", { name: "Operations" }).click();
     await expect(page).toHaveURL(/\/p\/acme\/web\/ops$/);
-    await expect.poll(async () => (await context.cookies()).some((c) => c.name === "orrery_last")).toBe(true);
+    await expect.poll(async () => (await context.cookies()).some((c) => c.name === "orrery_last" && decodeURIComponent(c.value).endsWith("/ops"))).toBe(true);
 
     await page.goto("/");
     await expect(page).toHaveURL(/\/p\/acme\/web\/ops$/);
