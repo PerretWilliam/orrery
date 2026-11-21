@@ -57,6 +57,8 @@ test.describe("once the instance is set up", () => {
       .poll(
         async () => {
           await page.goto("/");
+          // The redirect of a streamed page happens in the browser, a moment after the document arrives.
+          await page.waitForURL(/\/p\//, { timeout: 5_000 }).catch(() => undefined);
           return new URL(page.url()).pathname;
         },
         { timeout: 60_000 },
