@@ -13,6 +13,8 @@ export const coverageExclude = [
   "src/features/repos/domain/git-provider.ts",
   // Process wiring of the CLI (stdin/argv/exit code), exercised end to end by src/cli/orrery.test.ts.
   "src/cli/orrery.ts",
+  // Drizzle implementation of the setup store: SQL only, exercised on a real Postgres by tests/integration/setup-store.test.ts.
+  "src/features/setup/server/drizzle-store.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];

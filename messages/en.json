@@ -5,5 +5,18 @@
   },
   "Home": {
     "title": "Orrery"
+  },
+  "Setup": {
+    "title": "Set up Orrery",
+    "tokenIntro": "Enter the setup token printed in the container logs. It proves you operate this server.",
+    "tokenLabel": "Setup token",
+    "tokenSubmit": "Continue",
+    "createIntro": "Next, create the GitHub App that signs you in and reads your repositories. You will go to GitHub and come back here.",
+    "createPermissions": "The app is read-only: metadata, contents, issues, pull requests, actions and organization members.",
+    "createSubmit": "Create the GitHub App",
+    "doneTitle": "GitHub App created",
+    "doneBody": "Install it on the accounts and organizations whose repositories you want to see. Then sign in with GitHub in this browser: the first sign-in becomes the instance admin.",
+    "doneInstall": "Install the GitHub App",
+    "errorTitle": "Something went wrong"
   }
 }

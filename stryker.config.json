@@ -10,6 +10,8 @@
     "src/features/access/domain/**/*.ts",
     "src/features/secrets/domain/**/*.ts",
     "src/features/data-proxy/domain/**/*.ts",
+    "src/features/setup/domain/**/*.ts",
+    "src/features/setup/server/service.ts",
     "src/lib/ssrf-guard*.ts",
     "src/lib/crypto*.ts",
     "!src/**/*.test.ts",
