@@ -6,7 +6,8 @@ export type CompletedSetup = {
   githubClientId: string;
   clientSecretCiphertext: string;
   privateKeyCiphertext: string;
-  webhookSecretCiphertext: string;
+  /** `null` when the App has no webhook: the endpoint then answers as if it did not exist. */
+  webhookSecretCiphertext: string | null;
   encryptionKeyId: string;
   adminClaimHash: string;
   adminClaimExpiresAt: Date;
