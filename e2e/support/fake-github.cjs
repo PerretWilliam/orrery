@@ -46,5 +46,8 @@ function answer(method, path, headers) {
 globalThis.fetch = async (input, init) => {
   const request = new Request(input, init);
   if (!request.url.startsWith(`${API}/`)) return realFetch(input, init);
-  return answer(request.method, request.url.slice(API.length), request.headers);
+  const path = request.url.slice(API.length);
+  const response = answer(request.method, path, request.headers);
+  console.log(`[fake-github] ${request.method} ${path} -> ${response.status}`);
+  return response;
 };
