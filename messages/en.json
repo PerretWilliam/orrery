@@ -29,6 +29,8 @@
     "brand": "Orrery",
     "projects": "Projects",
     "signOut": "Sign out",
+    "themeSwitch": "Theme: {theme}. Switch theme.",
+    "theme": { "system": "System", "light": "Light", "dark": "Dark" },
     "pages": "Pages",
     "emptyTitle": "No projects yet",
     "emptyBody": "A repository shows up here once it has a .hub.yml file on its default branch and the GitHub App can read it.",

@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button-variants";
+import { accentStyle } from "@/lib/accent";
 import { WidgetGrid } from "@/features/widgets/components/widget-grid";
 import { projectPath } from "../domain/project";
 import type { Project } from "../server/projects";
@@ -12,7 +13,7 @@ type Page = NonNullable<Project["config"]>["pages"][number];
 export function ProjectView({ project, page }: { project: Project; page: Page | null }) {
   const t = useTranslations("Shell");
   return (
-    <>
+    <div className="contents" style={accentStyle(project.color)}>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{project.title}</h1>
         <span className="text-sm text-muted-foreground">
@@ -54,6 +55,6 @@ export function ProjectView({ project, page }: { project: Project; page: Page | 
           <WidgetGrid project={{ id: project.id, owner: project.owner, name: project.name, config: project.config }} widgets={page.widgets} />
         </>
       ) : null}
-    </>
+    </div>
   );
 }
