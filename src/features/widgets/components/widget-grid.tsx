@@ -5,7 +5,7 @@ import { GRID_COLUMNS, layoutFor } from "../domain/grid";
 import type { Widget } from "../domain/types";
 import { WidgetBoundary } from "./widget-boundary";
 import { WidgetFrame } from "./widget-frame";
-import { WidgetLoading } from "./widget-states";
+import { WidgetCrashed, WidgetLoading } from "./widget-states";
 
 /**
  * The widgets of a page on a 12-column CSS grid, in the order of the file. Each widget has its own error boundary and
@@ -25,7 +25,7 @@ export function WidgetGrid({ project, widgets }: { project: { id: string; config
             className="min-h-28 md:[grid-column:var(--col)] md:[grid-row:var(--row)]"
             style={{ "--col": `${x + 1} / span ${w}`, "--row": `${y + 1} / span ${h}` } as React.CSSProperties}
           >
-            <WidgetBoundary title={title}>
+            <WidgetBoundary fallback={<WidgetCrashed title={title} />}>
               <Suspense fallback={<WidgetLoading />}>
                 <WidgetFrame project={project} widget={widget} />
               </Suspense>
