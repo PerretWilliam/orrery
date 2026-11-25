@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   resolveSecrets,
+  type ResolveResult,
   type SecretLookup,
 } from "@/features/secrets/domain/resolve";
 import { redactSecrets } from "@/features/secrets/domain/redact";
@@ -9,13 +10,16 @@ import { SsrfError, type SsrfPolicy } from "@/lib/ssrf-guard";
 import { SourceError } from "./source-error";
 
 /**
- * The data proxy: what a widget gets for a source. One cache entry per (project, request), shared by every viewer.
+ * The data proxy: what a widget gets for a source. One cache entry per (project, request, host rules), shared by
+ * every viewer.
  *
  * - Fresh entry: returned as is.
  * - Expired entry: returned at once as `stale` while one background request refreshes it (stale-while-revalidate).
  * - No entry: one request is made, and every viewer asking meanwhile waits for that same request (coalescing).
  * - A failed request is never cached and never replaces good data. The cache is an optimisation: if it breaks, requests
- *   still work, and if anything needed to build or allow the request breaks, nothing is sent (fail closed).
+ *   still work.
+ * - The host rules and the secret bindings are read before the cache, on every read: cached data is only shown while the
+ *   request that fetched it is still allowed. If they cannot be read, nothing is sent or shown (fail closed).
  * Secrets are resolved just before sending and never reach the cache key, the cache or the logs.
  */
 
@@ -42,6 +46,13 @@ export type Failure = {
   readonly fix: string;
   readonly path?: string;
 };
+type Refusal = { ok: false; errors: readonly Failure[] };
+/** A request today's rules allow, with its secrets filled in. */
+type Allowed = {
+  ok: true;
+  policy: SsrfPolicy;
+  resolved: Extract<ResolveResult, { ok: true }>;
+};
 export type ProxyResult =
   | {
       ok: true;
@@ -50,7 +61,7 @@ export type ProxyResult =
       fetchedAt: Date;
       expiresAt: Date;
     }
-  | { ok: false; errors: readonly Failure[] };
+  | Refusal;
 
 export type CacheEntry = {
   body: unknown;
@@ -90,10 +101,16 @@ export type ProxyDeps = {
 };
 
 /**
- * Identifies a request without ever containing a secret value: it hashes the request as written in `.hub.yml`
- * (references like `${TOKEN}` included, not their values), scoped to the project.
+ * Identifies a request under the host rules it is made with, without ever containing a secret value: it hashes the
+ * request as written in `.hub.yml` (references like `${TOKEN}` included, not their values), scoped to the project. An
+ * entry fetched under other rules is never read again; the daily purge removes it.
+ * ponytail: any change of a list refetches every source it covers (all of them for the admin's list). Compare the
+ * rules per destination host if that load ever shows.
  */
-export function cacheKey({ repositoryId, source }: ProxyRequest): string {
+export function cacheKey(
+  { repositoryId, source }: ProxyRequest,
+  { adminAllow = [], projectAllow = [] }: SsrfPolicy,
+): string {
   const headers = Object.entries(source.headers ?? {})
     .map(([name, value]) => [name.toLowerCase(), value] as const)
     .sort(([a], [b]) => (a < b ? -1 : 1));
@@ -105,6 +122,8 @@ export function cacheKey({ repositoryId, source }: ProxyRequest): string {
         source.url,
         headers,
         source.body ?? null,
+        [...adminAllow].sort(),
+        [...projectAllow].sort(),
       ]),
     )
     .digest("hex");
@@ -141,16 +160,28 @@ export function createSourceProxy({
 }: ProxyDeps) {
   const running = new Map<string, Promise<ProxyResult>>();
 
-  async function request({
+  function failed(repositoryId: string, error: unknown, key?: string): Refusal {
+    const errors = toFailures(error);
+    log("warn", "source request failed", {
+      repositoryId,
+      key,
+      code: errors[0]?.code,
+    });
+    return { ok: false, errors };
+  }
+
+  /** What today's rules say about a request: sends nothing, reads no cache. Never rejects. */
+  async function authorize({
     repositoryId,
     source,
-  }: ProxyRequest): Promise<ProxyResult> {
-    const policy = await loadPolicy(repositoryId);
-    const resolved = resolveSecrets(
-      { url: source.url, headers: source.headers, body: source.body },
-      await loadSecrets(repositoryId),
-    );
-    if (!resolved.ok)
+  }: ProxyRequest): Promise<Allowed | Refusal> {
+    try {
+      const policy = await loadPolicy(repositoryId);
+      const resolved = resolveSecrets(
+        { url: source.url, headers: source.headers, body: source.body },
+        await loadSecrets(repositoryId),
+      );
+      if (resolved.ok) return { ok: true, policy, resolved };
       return {
         ok: false,
         errors: resolved.issues.map((issue) => ({
@@ -160,6 +191,15 @@ export function createSourceProxy({
           path: issue.path,
         })),
       };
+    } catch (error) {
+      return failed(repositoryId, error);
+    }
+  }
+
+  async function request(
+    source: SourceSpec,
+    { policy, resolved }: Allowed,
+  ): Promise<ProxyResult> {
     // Header names are case-insensitive: lowercase them all so the defaults can be overridden and never doubled.
     const given = Object.entries(resolved.request.headers).map(
       ([name, value]) => [name.toLowerCase(), value] as const,
@@ -193,20 +233,16 @@ export function createSourceProxy({
   }
 
   /** One request per key at a time. Never rejects. */
-  function refresh(key: string, req: ProxyRequest): Promise<ProxyResult> {
+  function refresh(
+    key: string,
+    req: ProxyRequest,
+    allowed: Allowed,
+  ): Promise<ProxyResult> {
     const joined = running.get(key);
     if (joined) return joined;
-    const flight = request(req)
-      .catch((error: unknown): ProxyResult => {
-        const errors = toFailures(error);
-        log("warn", "source request failed", {
-          repositoryId: req.repositoryId,
-          key,
-          code: errors[0]?.code,
-        });
-        return { ok: false, errors };
-      })
-      .then(async (result) => {
+    const flight = request(req.source, allowed)
+      .catch((error: unknown) => failed(req.repositoryId, error, key))
+      .then(async (result: ProxyResult) => {
         if (result.ok) {
           await store
             .put(key, req.repositoryId, {
@@ -230,7 +266,9 @@ export function createSourceProxy({
 
   return {
     async get(req: ProxyRequest): Promise<ProxyResult> {
-      const key = cacheKey(req);
+      const allowed = await authorize(req);
+      if (!allowed.ok) return allowed;
+      const key = cacheKey(req, allowed.policy);
       const entry = await store.get(key).catch((error: unknown) => {
         log("warn", "could not read the source cache", {
           key,
@@ -238,7 +276,7 @@ export function createSourceProxy({
         });
         return null;
       });
-      if (!entry) return refresh(key, req);
+      if (!entry) return refresh(key, req, allowed);
       if (now() - entry.lastAccessedAt.getTime() > TOUCH_INTERVAL_MS) {
         store.touch(key, new Date(now())).catch((error: unknown) =>
           log("warn", "could not touch the source cache", {
@@ -248,7 +286,7 @@ export function createSourceProxy({
         );
       }
       const fresh = now() < entry.expiresAt.getTime();
-      if (!fresh) void refresh(key, req);
+      if (!fresh) void refresh(key, req, allowed);
       return {
         ok: true,
         state: fresh ? "fresh" : "stale",
@@ -259,11 +297,14 @@ export function createSourceProxy({
     },
 
     /** A dry run: asks the source now, through the same policy and secret binding, and neither reads nor writes the cache. Never rejects. */
-    preview: (req: ProxyRequest): Promise<ProxyResult> =>
-      request(req).catch((error: unknown): ProxyResult => ({
+    async preview(req: ProxyRequest): Promise<ProxyResult> {
+      const allowed = await authorize(req);
+      if (!allowed.ok) return allowed;
+      return request(req.source, allowed).catch((error: unknown): Refusal => ({
         ok: false,
         errors: toFailures(error),
-      })),
+      }));
+    },
 
     purge: () => purgeUnused(store, now),
   };

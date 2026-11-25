@@ -54,6 +54,9 @@ const secrets: Record<string, { value: string; boundHosts: string[] }> = {
   OTHER: { value: "other-value-456", boundHosts: ["elsewhere.example.com"] },
 };
 const lookup: SecretLookup = (name) => Reflect.get(secrets, name);
+const POLICY: SsrfPolicy = { adminAllow: ["nas.lan"], projectAllow: [] };
+const keyOf = (request: ProxyRequest, policy = POLICY) =>
+  cacheKey(request, policy);
 
 function setup(
   over: Partial<ProxyDeps> = {},
@@ -61,10 +64,7 @@ function setup(
   clock = { now: T0 },
 ) {
   const fetch = vi.fn<ProxyDeps["fetch"]>(async () => ({ data: { v: 1 } }));
-  const loadPolicy = vi.fn(async (): Promise<SsrfPolicy> => ({
-    adminAllow: ["nas.lan"],
-    projectAllow: [],
-  }));
+  const loadPolicy = vi.fn(async () => POLICY);
   const loadSecrets = vi.fn(async () => lookup);
   const proxy = createSourceProxy({
     store,
@@ -82,39 +82,51 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("cacheKey", () => {
   it("is a stable SHA-256", () => {
-    expect(cacheKey(req())).toMatch(/^[0-9a-f]{64}$/);
-    expect(cacheKey(req())).toBe(cacheKey(req()));
+    expect(keyOf(req())).toMatch(/^[0-9a-f]{64}$/);
+    expect(keyOf(req())).toBe(keyOf(req()));
   });
   it("changes with the project, the method, the URL, the headers and the body", () => {
     const keys = new Set([
-      cacheKey(req()),
-      cacheKey(req({}, "22222222-2222-2222-2222-222222222222")),
-      cacheKey(req({ method: "POST" })),
-      cacheKey(req({ url: "https://api.example.com/other" })),
-      cacheKey(req({ url: "https://api.example.com/stats?x=1" })),
-      cacheKey(req({ headers: { "x-a": "1" } })),
-      cacheKey(req({ headers: { "x-a": "2" } })),
-      cacheKey(req({ headers: { "x-b": "1" } })),
-      cacheKey(req({ method: "POST", body: { q: 1 } })),
-      cacheKey(req({ method: "POST", body: { q: 2 } })),
+      keyOf(req()),
+      keyOf(req({}, "22222222-2222-2222-2222-222222222222")),
+      keyOf(req({ method: "POST" })),
+      keyOf(req({ url: "https://api.example.com/other" })),
+      keyOf(req({ url: "https://api.example.com/stats?x=1" })),
+      keyOf(req({ headers: { "x-a": "1" } })),
+      keyOf(req({ headers: { "x-a": "2" } })),
+      keyOf(req({ headers: { "x-b": "1" } })),
+      keyOf(req({ method: "POST", body: { q: 1 } })),
+      keyOf(req({ method: "POST", body: { q: 2 } })),
     ]);
     expect(keys.size).toBe(10);
   });
   it("does not depend on header order or on the case of header names", () => {
-    expect(cacheKey(req({ headers: { "X-A": "1", "x-b": "2" } }))).toBe(
-      cacheKey(req({ headers: { "X-B": "2", "x-a": "1" } })),
+    expect(keyOf(req({ headers: { "X-A": "1", "x-b": "2" } }))).toBe(
+      keyOf(req({ headers: { "X-B": "2", "x-a": "1" } })),
     );
   });
   it("does not depend on the TTL", () => {
-    expect(cacheKey(req({ ttlSeconds: 10 }))).toBe(
-      cacheKey(req({ ttlSeconds: 3600 })),
+    expect(keyOf(req({ ttlSeconds: 10 }))).toBe(
+      keyOf(req({ ttlSeconds: 3600 })),
     );
   });
   it("keeps a missing body apart from nothing at all being a different request", () => {
-    expect(cacheKey(req({ body: undefined }))).toBe(cacheKey(req()));
+    expect(keyOf(req({ body: undefined }))).toBe(keyOf(req()));
+  });
+  it("changes with the admin's list and with the project's", () => {
+    const keys = new Set([
+      keyOf(req()),
+      keyOf(req(), { adminAllow: [] }),
+      keyOf(req(), { adminAllow: ["nas.lan"], projectAllow: ["nas.lan"] }),
+      keyOf(req(), { projectAllow: ["nas.lan"] }),
+    ]);
+    expect(keys.size).toBe(4);
+    expect(keyOf(req(), {})).toBe(
+      keyOf(req(), { adminAllow: [], projectAllow: [] }),
+    );
   });
   it("hashes the reference, never anything that could hold a secret value", () => {
-    const key = cacheKey(
+    const key = keyOf(
       req({ headers: { Authorization: "Bearer ${API_TOKEN}" } }),
     );
     expect(key).not.toContain("s3cr3t");
@@ -133,7 +145,7 @@ describe("a request with no cache entry", () => {
       expiresAt: new Date(T0 + 60_000),
     });
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(store.put).toHaveBeenCalledWith(cacheKey(req()), REPO, {
+    expect(store.put).toHaveBeenCalledWith(keyOf(req()), REPO, {
       body: { v: 1 },
       fetchedAt: new Date(T0),
       expiresAt: new Date(T0 + 60_000),
@@ -319,7 +331,7 @@ describe("secrets", () => {
 });
 
 describe("fresh and stale answers", () => {
-  const key = cacheKey(req());
+  const key = keyOf(req());
   const entry = (over: Partial<CacheEntry> = {}): CacheEntry => ({
     body: { v: "cached" },
     fetchedAt: new Date(T0 - 30_000),
@@ -397,6 +409,63 @@ describe("fresh and stale answers", () => {
   });
 });
 
+describe("rules withdrawn after the data was cached", () => {
+  const withToken = req({ headers: { Authorization: "Bearer ${API_TOKEN}" } });
+
+  /** A proxy whose rules the test can change between two reads, as a maintainer or an admin would. */
+  function changeable() {
+    const rules = { policy: { adminAllow: ["nas.lan"], projectAllow: [] } as SsrfPolicy, secrets: lookup };
+    const all = setup({
+      loadPolicy: async () => rules.policy,
+      loadSecrets: async () => rules.secrets,
+    });
+    return { ...all, rules };
+  }
+
+  it.each([
+    ["the project narrows its hosts", { projectAllow: ["other.example.com"] }, "ssrf_host_not_allowed"],
+    ["the admin removes a private host", { adminAllow: [] }, "ssrf_address_blocked"],
+  ] as const)("shows the refusal instead of the old data when %s", async (_, policy, code) => {
+    logged();
+    const { proxy, fetch, rules } = changeable();
+    expect(await proxy.get(req())).toMatchObject({ ok: true });
+    rules.policy = { ...rules.policy, ...policy };
+    fetch.mockRejectedValue(new SsrfError(code));
+    expect(await proxy.get(req())).toMatchObject({ ok: false, errors: [{ code }] });
+  });
+
+  it.each([
+    ["deleted", undefined, "secret_unknown"],
+    ["rebound to another host", { value: "s3cr3t-value-123", boundHosts: ["elsewhere.example.com"] }, "secret_host_not_bound"],
+  ])("neither shows nor refreshes the old data once the secret is %s", async (_, secret, code) => {
+    const { proxy, fetch, rules, clock } = changeable();
+    expect(await proxy.get(withToken)).toMatchObject({ ok: true });
+    rules.secrets = () => secret;
+    for (const now of [T0, T0 + HOUR]) {
+      clock.now = now;
+      expect(await proxy.get(withToken)).toMatchObject({ ok: false, errors: [{ code }] });
+    }
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not take the same hosts in another order for a change", async () => {
+    const { proxy, fetch, rules } = changeable();
+    rules.policy = { adminAllow: ["a.lan", "b.lan"], projectAllow: ["x.test", "api.example.com"] };
+    await proxy.get(req());
+    rules.policy = { adminAllow: ["b.lan", "a.lan"], projectAllow: ["api.example.com", "x.test"] };
+    expect(await proxy.get(req())).toMatchObject({ state: "fresh" });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["loadPolicy", "loadSecrets"] as const)("shows no cached data when %s fails (fail closed)", async (loader) => {
+    logged();
+    const { proxy, loadPolicy, loadSecrets } = setup();
+    await proxy.get(req());
+    ({ loadPolicy, loadSecrets })[loader].mockRejectedValueOnce(new Error("db down"));
+    expect(await proxy.get(req())).toMatchObject({ ok: false, errors: [{ code: "source_internal" }] });
+  });
+});
+
 describe("coalescing", () => {
   it("shares one request between all the viewers of a missing entry", async () => {
     let release: (value: { data: unknown }) => void = () => {};
@@ -412,7 +481,7 @@ describe("coalescing", () => {
     expect(results.every((r) => r.ok && r.data === "shared")).toBe(true);
   });
   it("shares one refresh between all the viewers of a stale entry", async () => {
-    const key = cacheKey(req());
+    const key = keyOf(req());
     let release: (value: { data: unknown }) => void = () => {};
     const fetch = vi.fn<ProxyDeps["fetch"]>(
       () => new Promise((done) => (release = done)),
@@ -591,7 +660,7 @@ describe("a broken cache does not break the data", () => {
 });
 
 describe("last access", () => {
-  const key = cacheKey(req());
+  const key = keyOf(req());
   const read = async (lastAccessedAgoMs: number) => {
     const entry: CacheEntry = {
       body: 1,
@@ -689,7 +758,7 @@ describe("purge", () => {
 describe("preview (a dry run)", () => {
   it("asks the source now, ignoring and leaving the cache alone", async () => {
     const store = memoryStore({
-      [cacheKey(req())]: {
+      [keyOf(req())]: {
         body: { old: 1 },
         fetchedAt: new Date(T0),
         expiresAt: new Date(T0 + 60_000),
@@ -708,7 +777,10 @@ describe("preview (a dry run)", () => {
     const unbound = await proxy.preview(
       req({ headers: { authorization: "Bearer ${OTHER}" } }),
     );
-    expect(unbound.ok).toBe(false);
+    expect(unbound).toMatchObject({
+      ok: false,
+      errors: [{ code: "secret_host_not_bound" }],
+    });
     expect(fetch).not.toHaveBeenCalled();
     fetch.mockRejectedValue(new Error("boom"));
     expect(await proxy.preview(req())).toEqual({
