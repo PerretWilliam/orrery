@@ -13,7 +13,7 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "test:e2e": "playwright test",
     "mutation": "stryker run",
-    "size": "size-limit",
+    "size": "size-limit && node scripts/widget-budgets.mjs",
     "lighthouse": "lhci autorun",
     "audit:deps": "npm audit --omit=dev",
     "ci:local": "npm run typecheck && npm run lint && npm run db:check && npm run coverage && npm run build && npm run size",

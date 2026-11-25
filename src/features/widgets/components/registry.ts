@@ -1,0 +1,31 @@
+import { lazy, type ComponentType } from "react";
+import type { Widget, WidgetProps, WidgetType } from "../domain/types";
+
+type Loaders = { readonly [T in WidgetType]: () => Promise<{ default: ComponentType<WidgetProps<T>> }> };
+
+/**
+ * One loader per widget type of schema v1. To add a type: add it to the schema, write its component under
+ * `widgets/`, add one line here. Nothing else changes, and the config parser never knows about renderers.
+ * A widget's code is only fetched when a page draws a widget of that type. Types whose renderer has not landed yet
+ * share the placeholder. A test compares these keys with the schema, and `scripts/widget-budgets.mjs` caps their weight.
+ */
+export const LOADERS: Loaders = {
+  kpi: () => import("./widgets/placeholder"),
+  status: () => import("./widgets/placeholder"),
+  line: () => import("./widgets/placeholder"),
+  bar: () => import("./widgets/placeholder"),
+  donut: () => import("./widgets/placeholder"),
+  table: () => import("./widgets/placeholder"),
+  cohort: () => import("./widgets/placeholder"),
+  markdown: () => import("./widgets/placeholder"),
+  "github.issues": () => import("./widgets/placeholder"),
+  "github.pull_requests": () => import("./widgets/placeholder"),
+  "github.workflow_runs": () => import("./widgets/placeholder"),
+  "github.releases": () => import("./widgets/placeholder"),
+};
+
+// One lazy component per type, created once: the loader runs the first time a widget of this type is drawn.
+// The cast is the one place the per-type props are widened: `widget` is always of the type its loader was picked by.
+const COMPONENTS = new Map(Object.entries(LOADERS).map(([type, load]) => [type, lazy(load as () => Promise<{ default: ComponentType<{ widget: Widget }> }>)]));
+
+export const widgetComponent = (type: WidgetType): ComponentType<{ widget: Widget }> => COMPONENTS.get(type) as ComponentType<{ widget: Widget }>;
