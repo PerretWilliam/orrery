@@ -1,3 +1,4 @@
+import { io } from "next/cache";
 import { log } from "@/lib/logger";
 
 export const CACHE_TTL_MS = 5 * 60_000;
@@ -24,7 +25,8 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
 /**
  * Answers about GitHub that are kept for 5 minutes and fail closed: an error, a timeout or a lookup that throws gives
  * `deny`, is logged, and is never cached, so the next request asks again. Concurrent requests for a key share one
- * lookup. In memory on purpose: V1 runs one replica, and the cache only grows with users x repositories (or teams).
+ * lookup. A prerender (a prefetch included) only reads what is cached: it never starts or joins a lookup.
+ * In memory on purpose: V1 runs one replica, and the cache only grows with users x repositories (or teams).
  */
 export function createGuardedCache<V>({ deny, what, now = Date.now, ttlMs = CACHE_TTL_MS, timeoutMs = CACHE_TIMEOUT_MS }: GuardedCacheOptions<V>) {
   const cache = new Map<string, { value: V; expiresAt: number }>();
@@ -34,9 +36,12 @@ export function createGuardedCache<V>({ deny, what, now = Date.now, ttlMs = CACH
 
   return {
     /** `load` throws for anything it cannot trust. `context` goes to the log of a failure. */
-    get(key: string, load: () => Promise<V>, context: Record<string, unknown>): Promise<V> {
+    async get(key: string, load: () => Promise<V>, context: Record<string, unknown>): Promise<V> {
       const hit = cache.get(key);
-      if (hit && now() < hit.expiresAt) return Promise.resolve(hit.value);
+      if (hit && now() < hit.expiresAt) return hit.value;
+      // Next never sends a prerender's fetch(): its lookup would end in `deny`, also for the real requests sharing it.
+      // io() holds a prerender here and rejects when it is over; everywhere else it resolves at once.
+      await io();
       const joined = running.get(key);
       if (joined) return joined;
       const startedIn = generation;
