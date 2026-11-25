@@ -12,6 +12,8 @@ export type AuthDeps = {
   /** A valid GitHub access token for the user, refreshed if needed. Throws when GitHub refuses. */
   fetchAccessToken: (userId: string) => Promise<string>;
   now: () => Date;
+  /** Told after each accepted sign-in (the audit log). Must not throw. */
+  onSignIn?: (login: string) => Promise<void>;
 };
 
 export type SessionRow = { id: string; userId: string; createdAt: Date; expiresAt: Date };
@@ -22,7 +24,7 @@ export type TokenResult = { ok: true; token: string } | { ok: false; issue: Auth
  * Who may hold a session, and what happens to it. Fail closed: instance admins (or the browser that finished setup)
  * can always sign in; everyone else must pass the admin's sign-in allowlist.
  */
-export function createAuthService({ store, claimAdmin, canSignIn, fetchAccessToken, now }: AuthDeps) {
+export function createAuthService({ store, claimAdmin, canSignIn, fetchAccessToken, now, onSignIn }: AuthDeps) {
   const flight = singleFlight<TokenResult>();
   const refreshFailed = () => authIssue("auth_refresh_failed", "GitHub no longer renews this user's access");
 
@@ -39,6 +41,7 @@ export function createAuthService({ store, claimAdmin, canSignIn, fetchAccessTok
       const state = await store.userState(userId);
       if (!state?.login || !(await authorize(state.login, claimSecret))) return false;
       await store.resume(userId);
+      await onSignIn?.(state.login);
       return true;
     },
 

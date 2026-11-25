@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { randomBytes } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
+import type { AuditEvent } from "@/features/audit/domain/events";
 import { decrypt, parseKeyring } from "@/lib/crypto";
 import { createSecrets, secretContext } from "./service";
 import type { SecretWrite, SecretsStore } from "./store";
@@ -77,5 +78,40 @@ describe("secrets service", () => {
     const { secrets, store } = setup();
     expect(await secrets.remove(repo, actor, "A_KEY")).toEqual({ ok: true });
     expect(store.remove).toHaveBeenCalledWith("r1", "A_KEY");
+  });
+  describe("audit", () => {
+    const withAudit = (over = {}) => {
+      const audit = vi.fn(async (_event: AuditEvent) => {});
+      const store: SecretsStore = {
+        repositoryId: async () => "r1",
+        list: async () => [{ name: "A_KEY", boundHosts: [], updatedAt: new Date(0) }],
+        save: async () => {},
+        remove: async () => true,
+        ...over,
+      };
+      return { audit, secrets: createSecrets({ store, keyring: () => keyring, canManage: async () => true, now: () => new Date(5), audit }) };
+    };
+    it("records the name, never the value: created for a new secret, updated for an existing one, deleted on removal", async () => {
+      const { audit, secrets } = withAudit();
+      await secrets.save(repo, actor, { ...input, name: "NEW_KEY" });
+      await secrets.save(repo, actor, input);
+      await secrets.remove(repo, actor, "A_KEY");
+      expect(audit.mock.calls.map(([e]) => [e.event, e.detail])).toEqual([
+        ["secret_created", { name: "NEW_KEY" }],
+        ["secret_updated", { name: "A_KEY" }],
+        ["secret_deleted", { name: "A_KEY" }],
+      ]);
+      expect(audit.mock.calls[0][0]).toMatchObject({ actor: "octo", repository: "acme/web" });
+      expect(JSON.stringify(audit.mock.calls)).not.toContain(VALUE);
+    });
+    it("records nothing for a refused or invalid write", async () => {
+      const { audit, secrets } = withAudit({ repositoryId: async () => null });
+      await secrets.save(repo, actor, input);
+      await secrets.remove(repo, actor, "A_KEY");
+      const ok = withAudit();
+      await ok.secrets.save(repo, actor, { ...input, name: "bad name" });
+      expect(audit).not.toHaveBeenCalled();
+      expect(ok.audit).not.toHaveBeenCalled();
+    });
   });
 });

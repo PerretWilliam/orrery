@@ -61,6 +61,15 @@ describe("startSession", () => {
     expect(await service.startSession("u1", undefined)).toBe(true);
     expect(calls.resume).toEqual(["u1"]);
   });
+  it("tells the audit log about an accepted sign-in only, with the login as stored", async () => {
+    const onSignIn = vi.fn(async () => {});
+    const ok = setup({ users: { u1: { login: "Octo", suspendedAt: null } }, admins: ["octo"] });
+    const service = createAuthService({ store: ok.store, claimAdmin: ok.claimAdmin, canSignIn: ok.canSignIn, fetchAccessToken: ok.fetchAccessToken, now: () => NOW, onSignIn });
+    await service.startSession("u1", undefined);
+    expect(onSignIn).toHaveBeenCalledExactlyOnceWith("Octo");
+    await service.startSession("nobody", undefined);
+    expect(onSignIn).toHaveBeenCalledTimes(1);
+  });
   it.each([
     ["an unknown user", {}],
     ["a user without a login", { u1: { login: null, suspendedAt: null } }],
