@@ -19,7 +19,7 @@ vi.mock("next/headers", () => ({
   headers: async () => new Headers({ host: "hub.test" }),
   cookies: async () => ({ get: (name: string) => (name === "orrery_last" && cookieValue() !== undefined ? { value: cookieValue() } : undefined) }),
 }));
-vi.mock("next/navigation", () => ({ redirect: (to: string) => redirect(to) }));
+vi.mock("next/navigation", () => ({ redirect: (to: string) => redirect(to), usePathname: () => "/" }));
 
 import { HomeContent } from "./home-content";
 

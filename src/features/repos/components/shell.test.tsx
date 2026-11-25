@@ -2,12 +2,15 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
 import { renderToString } from "react-dom/server";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import messages from "../../../../messages/en.json";
 import { ConfigV1 } from "@/features/config/domain/schema-v1";
 import type { ListedProject } from "../server/projects";
 import { AppShell, EmptyProjects } from "./app-shell";
 import { ProjectView } from "./project-view";
+
+const pathname = vi.hoisted(() => ({ value: null as string | null }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname.value }));
 
 const show = (ui: ReactElement) =>
   render(
@@ -28,7 +31,10 @@ const project = (over: Partial<ListedProject> = {}): ListedProject => ({ id: "r1
 
 const viewer = { userId: "u1", login: "octo" };
 const resize = (width: number) => Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
-afterEach(() => resize(1024));
+afterEach(() => {
+  resize(1024);
+  pathname.value = null;
+});
 
 const projects = () => within(screen.getByRole("navigation", { name: "Projects" }));
 const unfold = (name: RegExp) => fireEvent.click(projects().getByRole("button", { name }));
@@ -49,8 +55,9 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
   });
   it("unfolds the project of the current page, and marks that page", () => {
+    pathname.value = "/p/acme/web/ops";
     show(
-      <AppShell viewer={viewer} projects={[project(), project({ name: "api", title: "API" })]} current="/p/acme/web/ops">
+      <AppShell viewer={viewer} projects={[project(), project({ name: "api", title: "API" })]}>
         x
       </AppShell>,
     );
@@ -72,9 +79,30 @@ describe("AppShell", () => {
     unfold(/Starfall/);
     await waitFor(() => expect(projects().queryByRole("link", { name: "Ops" })).toBeNull());
   });
+  it("keeps the sidebar from page to page: unfolds where the URL goes, and leaves the rest as the user put it", async () => {
+    const ui = () => (
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AppShell viewer={viewer} projects={[project(), project({ name: "api", title: "API" })]}>
+          x
+        </AppShell>
+      </NextIntlClientProvider>
+    );
+    pathname.value = "/p/acme/web/ops";
+    const view = render(ui());
+    pathname.value = "/p/acme/api/ops";
+    view.rerender(ui());
+    expect(projects().getByRole("button", { name: /Starfall/ })).toHaveAttribute("aria-expanded", "true");
+    expect(projects().getByRole("button", { name: /API/ })).toHaveAttribute("aria-expanded", "true");
+    unfold(/API/);
+    pathname.value = "/settings";
+    view.rerender(ui());
+    expect(projects().getByRole("button", { name: /API/ })).toHaveAttribute("aria-expanded", "false");
+    expect(projects().getByRole("button", { name: /Starfall/ })).toHaveAttribute("aria-expanded", "true");
+  });
   it("lists the project's settings with its pages, only for a user who manages it", () => {
+    pathname.value = "/settings/acme/web";
     show(
-      <AppShell viewer={viewer} projects={[project({ canManage: true }), project({ name: "api", title: "API" })]} current="/settings/acme/web">
+      <AppShell viewer={viewer} projects={[project({ canManage: true }), project({ name: "api", title: "API" })]}>
         x
       </AppShell>,
     );
@@ -85,8 +113,9 @@ describe("AppShell", () => {
     expect(projects().getAllByRole("link", { name: "Settings" })).toHaveLength(1);
   });
   it("leads to the problems of a project whose config was never valid", () => {
+    pathname.value = "/p/acme/web";
     show(
-      <AppShell viewer={viewer} projects={[project({ config: null })]} current="/p/acme/web">
+      <AppShell viewer={viewer} projects={[project({ config: null })]}>
         x
       </AppShell>,
     );
@@ -99,8 +128,9 @@ describe("AppShell", () => {
       project: { name: "Starfall" },
       pages: [{ id: "activity", title: "Activity", widgets: [{ type: "github.issues" }, { type: "github.pull_requests", title: "<b>Reviews</b>" }] }],
     });
+    pathname.value = "/p/acme/web/activity/issues";
     const view = show(
-      <AppShell viewer={viewer} projects={[project({ config: activity })]} current="/p/acme/web/activity/issues">
+      <AppShell viewer={viewer} projects={[project({ config: activity })]}>
         x
       </AppShell>,
     );
@@ -109,6 +139,7 @@ describe("AppShell", () => {
     expect(projects().getByRole("link", { name: "Issues" })).toHaveAttribute("aria-current", "page");
     expect(projects().getByRole("link", { name: "<b>Reviews</b>" })).toHaveAttribute("href", "/p/acme/web/activity/pull-requests");
     view.unmount();
+    pathname.value = null;
     show(
       <AppShell viewer={viewer} projects={[project({ config: activity })]}>
         x
@@ -142,9 +173,10 @@ describe("AppShell", () => {
   });
   it("is rendered on the server as on a wide screen", () => {
     resize(400);
+    pathname.value = "/p/acme/web/ops";
     const html = renderToString(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <AppShell viewer={viewer} projects={[project()]} current="/p/acme/web/ops">
+        <AppShell viewer={viewer} projects={[project()]}>
           x
         </AppShell>
       </NextIntlClientProvider>,
@@ -153,8 +185,9 @@ describe("AppShell", () => {
   });
   it("opens as a drawer on a narrow screen, and closes it when a link is followed", async () => {
     resize(400);
+    pathname.value = "/p/acme/web/overview";
     show(
-      <AppShell viewer={viewer} projects={[project()]} current="/p/acme/web/overview">
+      <AppShell viewer={viewer} projects={[project()]}>
         x
       </AppShell>,
     );

@@ -4,8 +4,6 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { getAdminSettings } from "@/features/admin-settings/server/runtime";
 import { TOKENS_PATH } from "@/features/agents/domain/tokens";
 import type { Viewer } from "@/features/auth/domain/profile";
-import { AppShell } from "@/features/repos/components/app-shell";
-import { getProjects } from "@/features/repos/server/runtime";
 
 const SECTIONS = [
   { id: "appearance", href: "/settings" },
@@ -34,14 +32,11 @@ export function SettingsFrame({ section, isAdmin, children }: { section: Setting
   );
 }
 
-/** One section of the general settings, inside the app shell, for a signed-in user. */
+/** One section of the general settings, for a signed-in user. */
 export async function settingsPage(viewer: Viewer, section: SettingsSection, children: React.ReactNode) {
-  const [projects, isAdmin] = await Promise.all([getProjects().visibleTo(viewer.login), getAdminSettings().isAdmin(viewer)]);
   return (
-    <AppShell viewer={viewer} projects={projects}>
-      <SettingsFrame section={section} isAdmin={isAdmin}>
-        {children}
-      </SettingsFrame>
-    </AppShell>
+    <SettingsFrame section={section} isAdmin={await getAdminSettings().isAdmin(viewer)}>
+      {children}
+    </SettingsFrame>
   );
 }

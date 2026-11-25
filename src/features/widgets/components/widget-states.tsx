@@ -3,11 +3,39 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyMedia } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Failure } from "@/features/data-proxy/domain/source-proxy";
 
-export function WidgetLoading() {
+/** The blocks of each family of widgets, so the card that arrives looks like the one that was waiting. */
+const SHAPES = {
+  value: ["h-9 w-24", "h-4 w-32"],
+  chart: ["min-h-24 w-full flex-1"],
+  rows: ["h-8 w-48", "h-5 w-full", "h-5 w-full", "h-5 w-full", "h-5 w-full"],
+  text: ["h-4 w-full", "h-4 w-5/6", "h-4 w-2/3"],
+} as const;
+
+const shapeOf = (type: string): keyof typeof SHAPES => {
+  if (type === "kpi" || type === "status") return "value";
+  if (type === "line" || type === "bar" || type === "donut" || type === "cohort") return "chart";
+  return type === "table" || type.startsWith("github.") ? "rows" : "text";
+};
+
+/** Shown while a widget's data is on its way. */
+export function WidgetLoading({ type }: { type: string }) {
   const t = useTranslations("Widgets");
-  return <Card className="h-full animate-pulse" aria-busy="true" aria-label={t("loading")} />;
+  const shape = shapeOf(type);
+  return (
+    <Card className="h-full" aria-busy="true" aria-label={t("loading")} data-shape={shape}>
+      <CardHeader>
+        <Skeleton className="h-4 w-1/3" />
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-3">
+        {SHAPES[shape].map((block, index) => (
+          <Skeleton key={index} className={block} />
+        ))}
+      </CardContent>
+    </Card>
+  );
 }
 
 /** The empty state: the source answered, but there is nothing to show. */

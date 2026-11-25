@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import messages from "../../../../../messages/en.json";
@@ -27,6 +27,29 @@ describe("GitHub widgets", () => {
     expect(screen.getByText("Jan 5, 2026")).toBeInTheDocument();
     expect(screen.getByText("closed")).toBeInTheDocument();
     expect(screen.getByText("#3 No date")).toBeInTheDocument();
+  });
+  const first = () => screen.getAllByRole("row").slice(1).map((row) => within(row).getAllByRole("cell")[0].textContent?.split(" ")[0]);
+  it("sorts by any column, numbers in numeric order and empty cells last, keeping the host's order until asked", () => {
+    wrap(<Issues widget={{ type: "github.issues" } as never} data={[{ ...items[0], key: "#10" }, items[1], { ...items[2], key: "#9" }]} />);
+    expect(first()).toEqual(["#10", "#2", "#9"]);
+    fireEvent.click(screen.getByRole("button", { name: "Sort by Title" }));
+    expect(first()).toEqual(["#2", "#9", "#10"]);
+    for (const name of ["Sort by Author", "Sort by Updated"]) {
+      fireEvent.click(screen.getByRole("button", { name }));
+      expect(first()[0]).toBe("#10");
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Sort by State" }));
+    expect(first()[0]).toBe("#2");
+    expect(screen.getByRole("columnheader", { name: /State/ })).toHaveAttribute("aria-sort", "ascending");
+  });
+  it("searches every column, and says when nothing matches", () => {
+    wrap(<Issues widget={{ type: "github.issues" } as never} data={items} />);
+    const box = screen.getByRole("searchbox", { name: "Search rows" });
+    fireEvent.change(box, { target: { value: "ada" } });
+    expect(first()).toEqual(["#1"]);
+    expect(screen.getByText("1 row")).toBeInTheDocument();
+    fireEvent.change(box, { target: { value: "zzz" } });
+    expect(screen.getByText("No row matches your search.")).toBeInTheDocument();
   });
   it("draw the list without a title when the file gives none", () => {
     wrap(<PullRequests widget={{ type: "github.pull_requests" } as never} data={items} />);

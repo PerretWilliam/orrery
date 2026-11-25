@@ -10,8 +10,12 @@ const now = new Date("2026-01-01T12:00:00Z");
 
 describe("widget states", () => {
   it("loading is a busy card with an accessible name", () => {
-    show(<WidgetLoading />);
+    show(<WidgetLoading type="kpi" />);
     expect(screen.getByLabelText("Loading…")).toHaveAttribute("aria-busy", "true");
+  });
+  it.each([["kpi", "value"], ["status", "value"], ["line", "chart"], ["bar", "chart"], ["donut", "chart"], ["cohort", "chart"], ["table", "rows"], ["github.issues", "rows"], ["markdown", "text"]])("a loading %s looks like %s", (type, shape) => {
+    show(<WidgetLoading type={type} />);
+    expect(screen.getByLabelText("Loading…")).toHaveAttribute("data-shape", shape);
   });
   it("empty says so, with or without a title", () => {
     show(<WidgetEmpty title="Players" />);

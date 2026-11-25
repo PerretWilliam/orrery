@@ -23,7 +23,14 @@
     "title": "Sign in to Orrery",
     "intro": "Orrery shows what GitHub lets you see. Sign in with the GitHub account you use for your repositories.",
     "submit": "Sign in with GitHub",
-    "errorTitle": "Sign-in problem"
+    "errorTitle": "Sign-in problem",
+    "headline": "Code state next to product health.",
+    "points": {
+      "code": "Issues, pull requests, CI runs and releases",
+      "metrics": "Your own numbers, from endpoints you expose",
+      "access": "You only see what GitHub lets you see"
+    },
+    "tagline": "Self-hosted. One dashboard per repository, described by .hub.yml."
   },
   "Shell": {
     "brand": "Orrery",
@@ -114,6 +121,12 @@
       "up": "Up",
       "degraded": "Degraded",
       "down": "Down"
+    },
+    "columns": {
+      "title": "Title",
+      "author": "Author",
+      "updated": "Updated",
+      "state": "State"
     }
   },
   "Admin": {

@@ -30,7 +30,7 @@ export function WidgetGrid({ project, widgets, single = false }: { project: Widg
             style={{ "--col": `${x + 1} / span ${w}`, "--row": `${y + 1} / span ${h}` } as React.CSSProperties}
           >
             <WidgetBoundary fallback={<WidgetCrashed title={title} />}>
-              <Suspense fallback={<WidgetLoading />}>
+              <Suspense fallback={<WidgetLoading type={widget.type} />}>
                 <WidgetFrame project={project} widget={widget} />
               </Suspense>
             </WidgetBoundary>

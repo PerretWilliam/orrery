@@ -6,6 +6,9 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-foreground: var(--brand-foreground);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -52,6 +55,10 @@
 
 /* Theme "Violet vif": the rules for these colors are in docs/design.md */
 :root {
+  /* The brand surface keeps these in both modes. */
+  --brand: #6a3cf0;
+  --brand-deep: #3b1f9e;
+  --brand-foreground: #ffffff;
   --background: #f6f4fd;
   --foreground: #17132a;
   --card: #ffffff;

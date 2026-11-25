@@ -2,9 +2,8 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { currentViewer } from "@/features/auth/server/runtime";
 import { listsOf } from "@/features/widgets/domain/lists";
-import { pickPage, projectPath } from "../domain/project";
+import { pickPage } from "../domain/project";
 import { getProjects } from "../server/runtime";
-import { AppShell } from "./app-shell";
 import { ProjectView } from "./project-view";
 import { RememberLocation } from "./remember-location";
 
@@ -27,9 +26,9 @@ export async function ProjectContent({ params }: { params: Params }) {
   if (segments[1] !== undefined && !list) notFound();
 
   return (
-    <AppShell viewer={viewer} projects={await projects.visibleTo(viewer.login)} current={projectPath(project, page?.id, list?.id)}>
+    <>
       <ProjectView project={project} page={page} list={list?.widget} />
       <RememberLocation place={{ owner: project.owner, name: project.name, page: page?.id ?? null, list: list?.id }} />
-    </AppShell>
+    </>
   );
 }

@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { AppearanceContent } from "@/features/settings/components/appearance-content";
+import { SettingsSkeleton } from "@/features/repos/components/skeletons";
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<SettingsSkeleton />}>
       <AppearanceContent />
     </Suspense>
   );

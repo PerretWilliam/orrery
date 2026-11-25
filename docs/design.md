@@ -13,6 +13,7 @@ The values live in [`src/app/globals.css`](../src/app/globals.css), light and da
 | Selection | `secondary`, `accent` | The active item: soft violet. |
 | Data | `chart-1` to `chart-5` | Charts only. |
 | State | `success`, `warning`, `destructive` | Up, degraded, down, alerts, errors. |
+| Brand | `brand`, `brand-deep`, `brand-foreground` | The sign-in panel only: `#6a3cf0` to `#3b1f9e` with white text, the same in both modes. |
 
 | Token | Light | Dark |
 | --- | --- | --- |
@@ -68,6 +69,10 @@ A widget that failed is a card with a `destructive` outline and wash, an icon, t
 ## Project colour
 
 `project.color` in `.hub.yml` replaces `primary` and `ring` inside that project's view, with black or white text chosen for contrast. It does not change charts' `chart-*` tokens or state colours.
+
+## Loading
+
+What is the same on every visit is drawn at once (the brand, the sign-in panel, the sidebar once loaded). The rest is a skeleton shaped like what is coming, in the same place: never an empty screen. The sidebar stays while pages change.
 
 ## Contrast
 

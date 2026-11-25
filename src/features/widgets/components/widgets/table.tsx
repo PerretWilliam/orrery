@@ -1,30 +1,20 @@
 "use client";
 
-import { createColumnHelper, createFilteredRowModel, createSortedRowModel, columnFilteringFeature, filterFn_includesString, globalFilteringFeature, rowSortingFeature, sortFn_basic, sortFn_text, tableFeatures, useTable } from "@tanstack/react-table";
+import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { columnId, tableRows, type CellValue, type TableRow as Row } from "../../domain/table";
 import type { WidgetProps } from "../../domain/types";
+import { SortHead, TableSearch, tableConfig } from "../data-table";
 import { WidgetEmpty } from "../widget-states";
 
 const ROW_HEIGHT = 40;
 const VIEWPORT = 384;
-const features = tableFeatures({
-  rowSortingFeature,
-  columnFilteringFeature,
-  globalFilteringFeature,
-  sortedRowModel: createSortedRowModel(),
-  filteredRowModel: createFilteredRowModel(),
-  sortFns: { basic: sortFn_basic, text: sortFn_text },
-  filterFns: { includesString: filterFn_includesString },
-});
-const helper = createColumnHelper<typeof features, Row>();
+const helper = createColumnHelper<typeof tableConfig, Row>();
 
 /**
  * Rows from the source's list, sortable, searchable and virtualised (only the rows in view are in the page, so thousands
@@ -49,7 +39,7 @@ export default function TableWidget({ widget, data }: WidgetProps<"table">) {
       )),
     [widget.columns, format],
   );
-  const table = useTable({ features, columns, data: rows, globalFilterFn: "includesString", getColumnCanGlobalFilter: () => true });
+  const table = useTable({ features: tableConfig, columns, data: rows, globalFilterFn: "includesString", getColumnCanGlobalFilter: () => true });
   const body = table.getRowModel().rows;
   const scroller = useRef<HTMLDivElement>(null);
   const virtual = useVirtualizer({
@@ -70,16 +60,12 @@ export default function TableWidget({ widget, data }: WidgetProps<"table">) {
         {widget.title ? <CardTitle>{widget.title}</CardTitle> : null}
         <div className="flex items-center justify-between gap-2">
           {widget.searchable ? (
-            <Input
-              type="search"
-              aria-label={t("search")}
-              placeholder={t("search")}
+            <TableSearch
               value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                table.setGlobalFilter(event.target.value);
+              onChange={(value) => {
+                setSearch(value);
+                table.setGlobalFilter(value);
               }}
-              className="max-w-xs"
             />
           ) : null}
           <p className="text-sm text-muted-foreground">{t("rows", { count: body.length })}</p>
@@ -90,18 +76,9 @@ export default function TableWidget({ widget, data }: WidgetProps<"table">) {
           <Table>
             <TableHeader>
               <TableRow>
-                {table.getHeaderGroups()[0].headers.map((header) => {
-                  const sorted = header.column.getIsSorted();
-                  const Icon = sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown;
-                  return (
-                    <TableHead key={header.id} aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : "none"}>
-                      <button type="button" className="inline-flex items-center gap-1" aria-label={t("sortBy", { column: widget.columns[Number(header.id.slice(1))].header })} onClick={header.column.getToggleSortingHandler()}>
-                        {widget.columns[Number(header.id.slice(1))].header}
-                        <Icon aria-hidden className="size-3.5" />
-                      </button>
-                    </TableHead>
-                  );
-                })}
+                {table.getHeaderGroups()[0].headers.map((header) => (
+                  <SortHead key={header.id} label={widget.columns[Number(header.id.slice(1))].header} sorted={header.column.getIsSorted()} onSort={header.column.getToggleSortingHandler()} />
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
