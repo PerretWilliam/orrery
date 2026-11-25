@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { projectPath } from "../domain/project";
@@ -30,6 +31,7 @@ export function AppShell({ projects, current, children }: { projects: readonly P
             );
           })}
         </nav>
+        <ThemeToggle />
         <form method="post" action="/auth/sign-out">
           <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
             {t("signOut")}
