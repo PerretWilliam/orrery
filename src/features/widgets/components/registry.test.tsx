@@ -17,10 +17,10 @@ describe("widget registry", () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <Suspense fallback="wait">
-          <WidgetRenderer widget={{ type: "table" } as never} data={null} />
+          <WidgetRenderer widget={{ type: "cohort" } as never} data={null} />
         </Suspense>
       </NextIntlClientProvider>,
     );
-    expect(await screen.findByText("table · Not drawn yet")).toBeInTheDocument();
+    expect(await screen.findByText("cohort · Not drawn yet")).toBeInTheDocument();
   });
 });
