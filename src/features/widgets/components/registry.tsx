@@ -6,8 +6,7 @@ type Loaders = { readonly [T in WidgetType]: () => Promise<{ default: ComponentT
 /**
  * One loader per widget type of schema v1. To add a type: add it to the schema, write its component under
  * `widgets/`, add one line here. Nothing else changes, and the config parser never knows about renderers.
- * A widget's code is only fetched when a page draws a widget of that type. Types whose renderer has not landed yet
- * share the placeholder. A test compares these keys with the schema, and `scripts/widget-budgets.mjs` caps their weight.
+ * A widget's code is only fetched when a page draws a widget of that type. A test compares these keys with the schema, and `scripts/widget-budgets.mjs` caps their weight.
  */
 export const LOADERS: Loaders = {
   kpi: () => import("./widgets/kpi"),
@@ -18,10 +17,10 @@ export const LOADERS: Loaders = {
   table: () => import("./widgets/table"),
   cohort: () => import("./widgets/cohort"),
   markdown: () => import("./widgets/markdown"),
-  "github.issues": () => import("./widgets/placeholder"),
-  "github.pull_requests": () => import("./widgets/placeholder"),
-  "github.workflow_runs": () => import("./widgets/placeholder"),
-  "github.releases": () => import("./widgets/placeholder"),
+  "github.issues": () => import("./widgets/github-issues"),
+  "github.pull_requests": () => import("./widgets/github-pull-requests"),
+  "github.workflow_runs": () => import("./widgets/github-workflow-runs"),
+  "github.releases": () => import("./widgets/github-releases"),
 };
 
 // One lazy component per type, created once: the loader runs the first time a widget of this type is drawn.

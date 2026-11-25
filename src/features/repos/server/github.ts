@@ -1,5 +1,7 @@
 import { createPrivateKey, createSign, type KeyObject } from "node:crypto";
 import { z } from "zod";
+import { activityPath, parseActivity } from "./github-activity";
+import type { ActivityResult } from "../domain/activity";
 import type { FileResult, GitProviderInterface, InstallationSummary, RepoPermission, RepoRef, RepoSummary } from "../domain/git-provider";
 
 export const GITHUB_API = "https://api.github.com";
@@ -206,6 +208,13 @@ export function createGitHubProvider({ credentials, fetch: send, now = Date.now 
       if (!file.success || file.data.type !== "file") return { kind: "absent" };
       if (file.data.encoding !== "base64" || file.data.content === undefined) throw new Error(`the file is larger than ${MAX_FILE_BYTES} bytes`);
       return { kind: "found", content: Buffer.from(file.data.content, "base64").toString("utf8"), etag: response.headers.get("etag") ?? "", sha: file.data.sha };
+    },
+
+    async getActivity(repo, request, etag): Promise<ActivityResult> {
+      const auth = { installation: await repoInstallation(repo) };
+      const response = await call(activityPath(repo, request), { auth, etag }, [200, 304]);
+      if (response.status === 304) return { kind: "unchanged" };
+      return { kind: "found", items: parseActivity(request, await response.json()), etag: response.headers.get("etag") ?? "" };
     },
   };
 }

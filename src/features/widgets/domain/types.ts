@@ -1,4 +1,8 @@
 import type { ConfigV1 } from "@/features/config/domain/schema-v1";
+import type { RepoRef } from "@/features/repos/domain/git-provider";
+
+/** What a widget needs to know of its project: the repository (id and place on the Git host) and its config. */
+export type WidgetProject = RepoRef & { id: string; config: ConfigV1 };
 
 /** One widget as the parser returns it, and the props every widget renderer receives. */
 export type Widget = ConfigV1["pages"][number]["widgets"][number];
