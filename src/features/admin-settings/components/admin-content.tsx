@@ -2,8 +2,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getAudit } from "@/features/audit/server/runtime";
 import { currentViewer } from "@/features/auth/server/runtime";
-import { AppShell } from "@/features/repos/components/app-shell";
-import { getProjects } from "@/features/repos/server/runtime";
+import { settingsPage } from "@/features/settings/components/settings-page";
 import { ADMIN_ERRORS, type AdminErrorCode } from "../domain/admin";
 import { getAdminSettings } from "../server/runtime";
 import { AdminView } from "./admin-view";
@@ -17,11 +16,11 @@ export async function AdminContent({ searchParams }: { searchParams: Query }) {
   if (!viewer) redirect("/sign-in");
   const overview = await getAdminSettings().overview(viewer);
   if (!overview) notFound();
-  const [audit, projects] = await Promise.all([getAudit().list(viewer.login, { limit: 50 }), getProjects().visibleTo(viewer.login)]);
+  const audit = await getAudit().list(viewer.login, { limit: 50 });
 
-  return (
-    <AppShell projects={projects}>
-      <AdminView overview={overview} audit={audit ?? []} saved={saved === "1"} error={error !== undefined && Object.hasOwn(ADMIN_ERRORS, error) ? (error as AdminErrorCode) : null} />
-    </AppShell>
+  return settingsPage(
+    viewer,
+    "admin",
+    <AdminView overview={overview} audit={audit ?? []} saved={saved === "1"} error={error !== undefined && Object.hasOwn(ADMIN_ERRORS, error) ? (error as AdminErrorCode) : null} />,
   );
 }

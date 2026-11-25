@@ -51,4 +51,10 @@ export const startDiscovery = (): (() => void) =>
 
 /** What the shell shows: the configured repositories the signed-in user may view. */
 export const getProjects = () =>
-  globalSingleton("projects", () => createProjects({ store: createProjectStore(getDb()), canView: (repo, login) => getAccessPolicy().can(repo, login, "view") }));
+  globalSingleton("projects", () =>
+    createProjects({
+      store: createProjectStore(getDb()),
+      canView: (repo, login) => getAccessPolicy().can(repo, login, "view"),
+      canManage: (repo, login) => getAccessPolicy().can(repo, login, "manage_hosts"),
+    }),
+  );

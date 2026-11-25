@@ -12,6 +12,7 @@ class Redirected extends Error {}
 vi.mock("@/features/auth/server/runtime", () => ({ currentViewer: (h: Headers) => currentViewer(h) }));
 vi.mock("@/features/repos/server/runtime", () => ({ getProjects: () => ({ visibleTo }) }));
 vi.mock("../server/runtime", () => ({ getTokens: () => ({ list }) }));
+vi.mock("@/features/admin-settings/server/runtime", () => ({ getAdminSettings: () => ({ isAdmin: async () => false }) }));
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ host: "hub.test" }),
   cookies: async () => ({ get: (name: string) => (name === "orrery_new_token" && cookie ? { value: cookie } : undefined) }),

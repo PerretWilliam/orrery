@@ -45,7 +45,7 @@ describe("admins and users", () => {
 
   it("reads a user's login and suspension, and nothing for an unknown id", async () => {
     await addUser();
-    expect(await store.userState("u1")).toEqual({ login: "octo", suspendedAt: null });
+    expect(await store.userState("u1")).toEqual({ login: "octo", suspendedAt: null, image: null });
     expect(await store.userState("missing")).toBeNull();
   });
 

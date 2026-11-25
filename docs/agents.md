@@ -75,7 +75,7 @@ API codes: `api_unauthorized` (401), `api_rate_limited` (429), `api_forbidden` (
 
 ## REST API and MCP
 
-Create a token under Account > Agent tokens. It is shown once, expires, and never gives more access than its owner has. Send `Authorization: Bearer orr_...`. Limit: 600 requests per minute per token.
+Create a token under Settings > Agent tokens. It is shown once, expires, and never gives more access than its owner has. Send `Authorization: Bearer orr_...`. Limit: 600 requests per minute per token.
 
 - OpenAPI 3.1: `GET /api/v1/openapi.json`.
 - `GET /api/v1/projects`, `GET /api/v1/projects/{owner}/{repo}`, `GET /api/v1/projects/{owner}/{repo}/pages/{page}/widgets/{index}/data`, `POST /api/v1/projects/{owner}/{repo}/preview`.

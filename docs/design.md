@@ -10,7 +10,7 @@ The values live in [`src/app/globals.css`](../src/app/globals.css), light and da
 | --- | --- | --- |
 | Surfaces and text | `background`, `card`, `muted`, `foreground`, `muted-foreground`, `border` | Violet-tinted neutrals. Most of the screen. |
 | Action and navigation | `primary`, `ring` | Primary buttons, links, focus. Violet. |
-| Selection | `secondary`, `accent` | The active tab or item: soft violet. |
+| Selection | `secondary`, `accent` | The active item: soft violet. |
 | Data | `chart-1` to `chart-5` | Charts only. |
 | State | `success`, `warning`, `destructive` | Up, degraded, down, alerts, errors. |
 
@@ -59,6 +59,10 @@ GitHub activity badges:
 
 Badges from a source's own data (a `badge` table column) stay violet: the hub does not know what their words mean. A trend arrow stays neutral for the same reason: the hub does not know whether up is good.
 
+## Logo
+
+[`src/app/icon.svg`](../src/app/icon.svg): a white orbit on the light-mode `primary` (`#6a3cf0`), the same in both modes. A project colour never changes it.
+
 ## Project colour
 
 `project.color` in `.hub.yml` replaces `primary` and `ring` inside that project's view, with black or white text chosen for contrast. It does not change charts' `chart-*` tokens or state colours.
@@ -71,4 +75,4 @@ Text pairs of the tables above are at least 4.5:1 in both modes. Keep it that wa
 
 - Base radius `0.75rem` (`--radius`); cards use `rounded-xl`. Use the radius scale, not pixel values.
 - Geist for text, Geist Mono for code. Numbers in metrics and tables use `tabular-nums`.
-- Cards sit on the tinted `background`; the header is a `card` surface.
+- Cards sit on the tinted `background`; the sidebar (and the top bar that replaces it on a phone) is a `card` surface. The current section or page is marked with the soft violet of selection.

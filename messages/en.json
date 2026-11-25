@@ -29,13 +29,11 @@
     "brand": "Orrery",
     "projects": "Projects",
     "signOut": "Sign out",
-    "themeSwitch": "Theme: {theme}. Switch theme.",
     "theme": {
       "system": "System",
       "light": "Light",
       "dark": "Dark"
     },
-    "pages": "Pages",
     "emptyTitle": "No projects yet",
     "emptyBody": "A repository shows up here once it has a .hub.yml file on its default branch and the GitHub App can read it.",
     "private": "Private",
@@ -47,7 +45,13 @@
     "issuePath": "Path",
     "issueFix": "Fix",
     "noWidgets": "This page has no widgets yet.",
-    "tokens": "Agent tokens"
+    "github": "GitHub",
+    "public": "Public",
+    "themeLabel": "Theme",
+    "sidebarTitle": "Sidebar",
+    "sidebarBody": "Projects and your account.",
+    "sidebarToggle": "Toggle sidebar",
+    "overview": "Overview"
   },
   "Secrets": {
     "title": "Secrets of {project}",
@@ -113,7 +117,7 @@
     "add": "Add",
     "remove": "Remove",
     "signInTitle": "Who may sign in",
-    "signInIntro": "Level 1 of the access policy. Entries are org:<login>, team:<org>/<slug> or user:<login>. GitHub's own permissions still apply: the hub only narrows.",
+    "signInIntro": "Level 1 of the access policy. Entries are org:'<'login>, team:'<'org>/'<'slug> or user:'<'login>. GitHub's own permissions still apply: the hub only narrows.",
     "signInEmpty": "The list is empty: nobody can sign in except admins.",
     "signInLabel": "Entry",
     "rulesTitle": "Project rules",
@@ -161,5 +165,14 @@
     "name": "Label",
     "days": "Lifetime in days",
     "create": "Create"
+  },
+  "Settings": {
+    "title": "Settings",
+    "sections": "Settings sections",
+    "appearance": "Appearance",
+    "tokens": "Agent tokens",
+    "admin": "Administration",
+    "themeTitle": "Theme",
+    "themeBody": "Remembered in this browser only. System follows your device."
   }
 }

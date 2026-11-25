@@ -80,6 +80,7 @@ function setup(world: World) {
       view: async (repo) => ROWS.find((r) => r.owner === repo.owner && r.name === repo.name) ?? null,
     },
     canView: (repo, login) => policy.can(repo, login, "view"),
+    canManage: (repo, login) => policy.can(repo, login, "manage_hosts"),
   });
   const tabs = async (login: string) => (await projects.visibleTo(login)).map((p) => p.name);
   return { policy, projects, tabs, rules, advance: (ms: number) => (clock.now += ms), fetchGitHub };

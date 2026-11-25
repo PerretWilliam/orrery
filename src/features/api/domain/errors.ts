@@ -3,7 +3,7 @@ export const API_ERRORS = {
   api_unauthorized: {
     status: 401,
     message: "Missing, invalid, expired or revoked agent token.",
-    fix: "Send `Authorization: Bearer <token>` with a token created under Account > Agent tokens.",
+    fix: "Send `Authorization: Bearer <token>` with a token created under Settings > Agent tokens.",
   },
   api_rate_limited: {
     status: 429,

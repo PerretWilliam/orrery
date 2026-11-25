@@ -18,6 +18,10 @@ describe("AdminView", () => {
     for (const text of [/nobody can sign in except admins/, /No rule: GitHub decides/, /private addresses are refused everywhere/, /encryption keys could not be read/, /Nothing recorded yet/]) expect(screen.getByText(text)).toBeInTheDocument();
     expect(screen.queryByText("Saved.")).not.toBeInTheDocument();
   });
+  it("writes the form of a sign-in entry, angle brackets included", () => {
+    show();
+    expect(screen.getByText(/Entries are org:<login>, team:<org>\/<slug> or user:<login>\. GitHub's own/)).toBeInTheDocument();
+  });
   it("lists every entry with a remove form carrying what the removal needs", () => {
     const { container } = show({
       overview: {

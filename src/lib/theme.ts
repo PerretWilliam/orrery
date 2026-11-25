@@ -9,9 +9,6 @@ export const parseTheme = (value: unknown): Theme => (THEMES.find((theme) => the
 
 export const resolveTheme = (theme: Theme, systemPrefersDark: boolean): "light" | "dark" => (theme === "system" ? (systemPrefersDark ? "dark" : "light") : theme);
 
-/** Next theme in the toggle's cycle. */
-export const nextTheme = (theme: Theme): Theme => THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
-
 /**
  * Runs in `<head>` before the first paint, so a dark page never flashes white. It only reads the stored choice and
  * toggles the `dark` class (its literals must match THEME_KEY and DARK_QUERY, a test checks it): it never throws (private mode, blocked storage) and sends nothing anywhere.

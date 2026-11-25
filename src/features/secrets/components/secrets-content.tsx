@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { currentViewer } from "@/features/auth/server/runtime";
+import { settingsPath } from "@/features/project-settings/domain/hosts";
 import { AppShell } from "@/features/repos/components/app-shell";
 import { getProjects } from "@/features/repos/server/runtime";
 import { SECRET_ERRORS, type SecretIssueCode } from "../domain/errors";
@@ -23,7 +24,7 @@ export async function SecretsContent({ params, searchParams }: { params: Params;
   if (!project || !secrets) notFound();
 
   return (
-    <AppShell projects={await projects.visibleTo(viewer.login)} current={project}>
+    <AppShell viewer={viewer} projects={await projects.visibleTo(viewer.login)} current={settingsPath(project)}>
       <SecretsView project={project} secrets={secrets} saved={saved === "1"} error={error !== undefined && Object.hasOwn(SECRET_ERRORS, error) ? (error as SecretIssueCode) : null} />
     </AppShell>
   );

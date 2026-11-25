@@ -68,7 +68,7 @@ export function AdminView({ overview, audit, saved, error }: Props) {
   const empty = (text: string) => <p className="text-sm text-muted-foreground">{text}</p>;
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+      <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
       {saved ? (
         <Alert>
           <AlertTitle>{t("saved")}</AlertTitle>

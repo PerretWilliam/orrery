@@ -6,7 +6,7 @@
 
 **A self-hosted control panel for your GitHub repositories.**
 
-Code state next to product health, one tab per repository, described by a versioned `.hub.yml`.
+Code state next to product health, one dashboard per repository, described by a versioned `.hub.yml`.
 
 [![CI](https://github.com/PerretWilliam/orrery/actions/workflows/ci.yml/badge.svg)](https://github.com/PerretWilliam/orrery/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)

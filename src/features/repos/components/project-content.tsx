@@ -1,8 +1,7 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { getAccessPolicy } from "@/features/access/server/runtime";
 import { currentViewer } from "@/features/auth/server/runtime";
-import { pickPage } from "../domain/project";
+import { pickPage, projectPath } from "../domain/project";
 import { getProjects } from "../server/runtime";
 import { AppShell } from "./app-shell";
 import { ProjectView } from "./project-view";
@@ -24,8 +23,8 @@ export async function ProjectContent({ params }: { params: Params }) {
   if (segments[0] !== undefined && !page) notFound();
 
   return (
-    <AppShell projects={await projects.visibleTo(viewer.login)} current={project}>
-      <ProjectView project={project} page={page} canManage={await getAccessPolicy().can(project, viewer.login, "manage_hosts")} />
+    <AppShell viewer={viewer} projects={await projects.visibleTo(viewer.login)} current={projectPath(project, page?.id)}>
+      <ProjectView project={project} page={page} />
       <RememberLocation place={{ owner: project.owner, name: project.name, page: page?.id ?? null }} />
     </AppShell>
   );

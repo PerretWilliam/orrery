@@ -7,6 +7,7 @@ import { SETTINGS_CONTEXT } from "@/features/setup/server/service";
 import { decrypt, keyringFromEnv } from "@/lib/crypto";
 import { getDb } from "@/lib/db/instance";
 import { account, session, user, verification } from "@/lib/db/schema";
+import type { Viewer } from "../domain/profile";
 import { loadAuthSecret } from "./auth-secret";
 import { createAuth, githubAccessToken, type Auth } from "./better-auth";
 import { createAuthStore } from "./drizzle-store";
@@ -63,9 +64,9 @@ export async function currentUser(headers: Headers): Promise<SessionCheck | null
 }
 
 /** Who is behind these headers: the session's user and their GitHub login. `null` without a valid session. */
-export async function currentViewer(headers: Headers): Promise<{ userId: string; login: string } | null> {
+export async function currentViewer(headers: Headers): Promise<Viewer | null> {
   const check = await currentUser(headers);
   if (!check?.ok) return null;
   const state = await createAuthStore(getDb()).userState(check.userId);
-  return state?.login ? { userId: check.userId, login: state.login } : null;
+  return state?.login ? { userId: check.userId, login: state.login, image: state.image } : null;
 }

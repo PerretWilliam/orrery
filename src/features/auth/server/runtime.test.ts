@@ -140,8 +140,8 @@ describe("currentViewer", () => {
   });
   it("gives the user id and GitHub login of a live session", async () => {
     auth.api.getSession.mockResolvedValue({ session, user: { id: "u1" } });
-    store.userState.mockResolvedValue({ login: "octo", suspendedAt: null });
-    expect(await currentViewer(headers("viewer.test"))).toEqual({ userId: "u1", login: "octo" });
+    store.userState.mockResolvedValue({ login: "octo", suspendedAt: null, image: "https://avatars.githubusercontent.com/u/1" });
+    expect(await currentViewer(headers("viewer.test"))).toEqual({ userId: "u1", login: "octo", image: "https://avatars.githubusercontent.com/u/1" });
   });
   it("is null for a user row without a login", async () => {
     auth.api.getSession.mockResolvedValue({ session, user: { id: "u1" } });

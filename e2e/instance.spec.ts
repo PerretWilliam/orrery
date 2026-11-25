@@ -113,21 +113,25 @@ test.describe("once the instance is set up", () => {
       page.getByRole("heading", { level: 1, name: "Starfall" }),
     ).toBeVisible();
     await expect(page.getByText("acme/web")).toBeVisible();
-    await expect(page.getByText("Private", { exact: true })).toBeVisible();
+    const projects = page.getByRole("navigation", { name: "Projects" });
     await expect(
-      page
-        .getByRole("navigation", { name: "Projects" })
-        .getByRole("link", { name: "Starfall" }),
+      projects.getByRole("button", { name: "Starfall" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      projects.getByRole("button", { name: "Starfall" }).getByRole("img", { name: "Private" }),
+    ).toBeVisible();
+    await expect(
+      projects.getByRole("link", { name: "Overview" }),
     ).toHaveAttribute("aria-current", "page");
     await context.close();
   });
 
-  test("the pages of a project are tabs, and the hub reopens where the user left", async ({
+  test("the pages of a project unfold in the sidebar, and the hub reopens where the user left", async ({
     browser,
   }) => {
     const { context, page } = await signedIn(browser, "alice");
     await page.goto("/p/acme/web");
-    const pages = page.getByRole("navigation", { name: "Pages" });
+    const pages = page.getByRole("navigation", { name: "Projects" });
     await expect(pages.getByRole("link", { name: "Overview" })).toHaveAttribute(
       "aria-current",
       "page",

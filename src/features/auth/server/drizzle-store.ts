@@ -12,7 +12,7 @@ export function createAuthStore(db: Db): AuthStore {
     },
 
     async userState(userId) {
-      const [row] = await db.select({ login: user.login, suspendedAt: user.authSuspendedAt }).from(user).where(eq(user.id, userId));
+      const [row] = await db.select({ login: user.login, suspendedAt: user.authSuspendedAt, image: user.image }).from(user).where(eq(user.id, userId));
       return row ?? null;
     },
 

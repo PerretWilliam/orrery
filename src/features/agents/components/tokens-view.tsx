@@ -16,7 +16,7 @@ export function TokensView({ tokens, created, saved, error, now }: Props) {
   const t = useTranslations("Tokens");
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+      <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
       <p className="text-sm text-muted-foreground">{t("intro")}</p>
       {created ? (
         <Alert>

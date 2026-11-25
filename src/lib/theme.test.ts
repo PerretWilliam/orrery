@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { THEME_KEY, THEME_SCRIPT, nextTheme, parseTheme, resolveTheme } from "./theme";
+import { THEME_KEY, THEME_SCRIPT, parseTheme, resolveTheme } from "./theme";
 
 describe("theme", () => {
   it("reads only known themes, and anything else is system", () => {
@@ -11,11 +11,6 @@ describe("theme", () => {
     expect(resolveTheme("system", false)).toBe("light");
     expect(resolveTheme("light", true)).toBe("light");
     expect(resolveTheme("dark", false)).toBe("dark");
-  });
-  it("cycles system, light, dark and back", () => {
-    expect(nextTheme("system")).toBe("light");
-    expect(nextTheme("light")).toBe("dark");
-    expect(nextTheme("dark")).toBe("system");
   });
 });
 

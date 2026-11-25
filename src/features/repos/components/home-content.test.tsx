@@ -101,6 +101,6 @@ describe("HomeContent", () => {
     visibleTo.mockResolvedValue([]);
     show((await HomeContent()) as ReactElement);
     expect(screen.getByRole("heading", { name: "No projects yet" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /octo/ })).toBeInTheDocument();
   });
 });

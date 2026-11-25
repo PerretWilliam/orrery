@@ -35,7 +35,7 @@ export async function HomeContent() {
   }
   if (projects[0]) redirect(projectPath(projects[0]));
   return (
-    <AppShell projects={projects}>
+    <AppShell viewer={viewer} projects={projects}>
       <EmptyProjects />
     </AppShell>
   );

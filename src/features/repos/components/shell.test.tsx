@@ -1,10 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
-import { describe, expect, it } from "vitest";
+import { renderToString } from "react-dom/server";
+import { afterEach, describe, expect, it } from "vitest";
 import messages from "../../../../messages/en.json";
 import { ConfigV1 } from "@/features/config/domain/schema-v1";
-import type { Project } from "../server/projects";
+import type { ListedProject } from "../server/projects";
 import { AppShell, EmptyProjects } from "./app-shell";
 import { ProjectView } from "./project-view";
 
@@ -23,27 +24,123 @@ const config = ConfigV1.parse({
     { id: "ops", title: "Ops", widgets: [{ type: "markdown", content: "hi" }] },
   ],
 });
-const project = (over: Partial<Project> = {}): Project => ({ id: "r1", owner: "acme", name: "web", isPrivate: false, archived: false, title: "Starfall", color: null, config, issues: [], ...over });
+const project = (over: Partial<ListedProject> = {}): ListedProject => ({ id: "r1", owner: "acme", name: "web", isPrivate: false, archived: false, title: "Starfall", color: null, config, issues: [], canManage: false, ...over });
+
+const viewer = { userId: "u1", login: "octo" };
+const resize = (width: number) => Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+afterEach(() => resize(1024));
+
+const projects = () => within(screen.getByRole("navigation", { name: "Projects" }));
+const unfold = (name: RegExp) => fireEvent.click(projects().getByRole("button", { name }));
 
 describe("AppShell", () => {
-  it("links to the visible projects, marks the current one and offers sign-out", () => {
+  it("lists the visible projects under GitHub and says which are private", () => {
     show(
-      <AppShell projects={[project({ color: "#7c3aed" }), project({ name: "api", title: "API" })]} current={{ owner: "acme", name: "web" }}>
+      <AppShell viewer={viewer} projects={[project({ color: "#7c3aed", isPrivate: true }), project({ name: "api", title: "API" })]}>
         <p>content</p>
       </AppShell>,
     );
-    const nav = screen.getByRole("navigation", { name: "Projects" });
-    expect(within(nav).getByRole("link", { name: "Starfall" })).toHaveAttribute("href", "/p/acme/web");
-    expect(within(nav).getByRole("link", { name: "Starfall" })).toHaveAttribute("aria-current", "page");
-    expect(within(nav).getByRole("link", { name: "API" })).not.toHaveAttribute("aria-current");
+    expect(projects().getByText("GitHub")).toBeInTheDocument();
+    expect(projects().getByRole("button", { name: /Starfall.*Private/ })).toHaveAttribute("aria-expanded", "false");
+    expect(projects().getByRole("button", { name: /API.*Public/ })).toHaveAttribute("aria-expanded", "false");
+    expect(projects().queryByRole("link")).toBeNull();
     expect(screen.getByText("content")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign out" }).closest("form")).toHaveAttribute("action", "/auth/sign-out");
     expect(screen.getByRole("link", { name: "Orrery" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Agent tokens" })).toHaveAttribute("href", "/account/tokens");
+    expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
   });
-  it("marks nothing without a current project", () => {
-    show(<AppShell projects={[project()]}>x</AppShell>);
-    expect(screen.getByRole("link", { name: "Starfall" })).not.toHaveAttribute("aria-current");
+  it("unfolds the project of the current page, and marks that page", () => {
+    show(
+      <AppShell viewer={viewer} projects={[project(), project({ name: "api", title: "API" })]} current="/p/acme/web/ops">
+        x
+      </AppShell>,
+    );
+    expect(projects().getByRole("button", { name: /Starfall/ })).toHaveAttribute("aria-expanded", "true");
+    expect(projects().getByRole("button", { name: /API/ })).toHaveAttribute("aria-expanded", "false");
+    expect(projects().getByRole("link", { name: "Ops" })).toHaveAttribute("aria-current", "page");
+    expect(projects().getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/p/acme/web/overview");
+    expect(projects().getByRole("link", { name: "Overview" })).not.toHaveAttribute("aria-current");
+    expect(projects().queryByRole("link", { name: "Settings" })).toBeNull();
+  });
+  it("folds and unfolds a project on demand", async () => {
+    show(
+      <AppShell viewer={viewer} projects={[project()]}>
+        x
+      </AppShell>,
+    );
+    unfold(/Starfall/);
+    expect(await projects().findByRole("link", { name: "Ops" })).toBeInTheDocument();
+    unfold(/Starfall/);
+    await waitFor(() => expect(projects().queryByRole("link", { name: "Ops" })).toBeNull());
+  });
+  it("lists the project's settings with its pages, only for a user who manages it", () => {
+    show(
+      <AppShell viewer={viewer} projects={[project({ canManage: true }), project({ name: "api", title: "API" })]} current="/settings/acme/web">
+        x
+      </AppShell>,
+    );
+    const settings = projects().getByRole("link", { name: "Settings" });
+    expect(settings).toHaveAttribute("href", "/settings/acme/web");
+    expect(settings).toHaveAttribute("aria-current", "page");
+    unfold(/API/);
+    expect(projects().getAllByRole("link", { name: "Settings" })).toHaveLength(1);
+  });
+  it("leads to the problems of a project whose config was never valid", () => {
+    show(
+      <AppShell viewer={viewer} projects={[project({ config: null })]} current="/p/acme/web">
+        x
+      </AppShell>,
+    );
+    expect(projects().getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/p/acme/web");
+    expect(projects().getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
+  });
+  it("names the visibility in a tooltip on hover", async () => {
+    show(
+      <AppShell viewer={viewer} projects={[project({ isPrivate: true })]}>
+        x
+      </AppShell>,
+    );
+    const trigger = screen.getByRole("img", { name: "Private" }).parentElement as HTMLElement;
+    fireEvent.pointerEnter(trigger, { pointerType: "mouse" });
+    fireEvent.mouseEnter(trigger);
+    fireEvent.mouseMove(trigger);
+    expect(await screen.findByText("Private")).toBeInTheDocument();
+  });
+  it("shows no project group without projects", () => {
+    show(
+      <AppShell viewer={viewer} projects={[]}>
+        x
+      </AppShell>,
+    );
+    expect(screen.queryByRole("navigation", { name: "Projects" })).toBeNull();
+    expect(screen.queryByText("GitHub")).toBeNull();
+  });
+  it("is rendered on the server as on a wide screen", () => {
+    resize(400);
+    const html = renderToString(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AppShell viewer={viewer} projects={[project()]} current="/p/acme/web/ops">
+          x
+        </AppShell>
+      </NextIntlClientProvider>,
+    );
+    expect(html).toContain('href="/p/acme/web/ops"');
+  });
+  it("opens as a drawer on a narrow screen, and closes it when a link is followed", async () => {
+    resize(400);
+    show(
+      <AppShell viewer={viewer} projects={[project()]} current="/p/acme/web/overview">
+        x
+      </AppShell>,
+    );
+    expect(screen.queryByRole("link", { name: "Orrery" })).toBeNull();
+    for (const [role, name] of [["link", "Ops"], ["link", "Orrery"], ["menuitem", "Settings"]]) {
+      fireEvent.click(screen.getByRole("button", { name: "Toggle sidebar" }));
+      if (role === "menuitem") fireEvent.click(await screen.findByRole("button", { name: /octo/ }));
+      const link = await screen.findByRole(role, { name });
+      link.addEventListener("click", (event) => event.preventDefault());
+      fireEvent.click(link);
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    }
   });
 });
 
@@ -55,20 +152,17 @@ describe("EmptyProjects", () => {
 });
 
 describe("ProjectView", () => {
-  it("shows the title, badges, page tabs and the selected page's widgets", () => {
+  it("shows the title, the archived badge and the selected page's widgets, without repeating the sidebar", () => {
     show(<ProjectView project={project({ isPrivate: true, archived: true })} page={config.pages[1]} />);
     expect(screen.getByRole("heading", { name: "Starfall" })).toBeInTheDocument();
     expect(screen.getByText("acme/web")).toBeInTheDocument();
-    expect(screen.getByText("Private")).toBeInTheDocument();
+    expect(screen.queryByText("Private")).toBeNull();
     expect(screen.getByText("Archived")).toBeInTheDocument();
-    const tabs = screen.getByRole("navigation", { name: "Pages" });
-    expect(within(tabs).getByRole("link", { name: "Ops" })).toHaveAttribute("aria-current", "page");
-    expect(within(tabs).getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/p/acme/web/overview");
+    expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
-  it("has no badges for a public, active project", () => {
+  it("has no badge for an active project", () => {
     show(<ProjectView project={project()} page={config.pages[0]} />);
-    expect(screen.queryByText("Private")).toBeNull();
     expect(screen.queryByText("Archived")).toBeNull();
     expect(screen.getByText("This page has no widgets yet.")).toBeInTheDocument();
   });
@@ -76,19 +170,19 @@ describe("ProjectView", () => {
     const issues = [
       { code: "config_syntax", path: "$.pages", message: "<script>alert(1)</script>", fix: "Fix it", line: 4 },
       { code: "config_required", path: "$.version", message: "Missing", fix: "Add it" },
-    ] as Project["issues"];
+    ] as ListedProject["issues"];
     const { container } = show(<ProjectView project={project({ issues })} page={config.pages[0]} />);
     expect(screen.getByText("The configuration file has problems")).toBeInTheDocument();
     expect(screen.getByText("Showing the last valid version until they are fixed.")).toBeInTheDocument();
     expect(container.querySelector("script")).toBeNull();
     expect(screen.getByText(/<script>alert\(1\)<\/script>/)).toBeInTheDocument();
     expect(screen.getByText("$.pages")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Pages" })).toBeInTheDocument();
+    expect(screen.getByText("This page has no widgets yet.")).toBeInTheDocument();
   });
   it("shows only the problems when the file has never been valid", () => {
-    const issues = [{ code: "config_syntax", path: "$", message: "bad", fix: "fix" }] as Project["issues"];
+    const issues = [{ code: "config_syntax", path: "$", message: "bad", fix: "fix" }] as ListedProject["issues"];
     show(<ProjectView project={project({ config: null, issues })} page={null} />);
     expect(screen.getByText("Nothing can be shown until they are fixed.")).toBeInTheDocument();
-    expect(screen.queryByRole("navigation", { name: "Pages" })).toBeNull();
+    expect(screen.queryByText("This page has no widgets yet.")).toBeNull();
   });
 });

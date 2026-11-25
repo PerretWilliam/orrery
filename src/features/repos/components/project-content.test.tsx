@@ -11,8 +11,6 @@ const visibleTo = vi.fn();
 class Redirected extends Error {}
 class NotFound extends Error {}
 vi.mock("@/features/auth/server/runtime", () => ({ currentViewer: (h: Headers) => currentViewer(h) }));
-const can = vi.fn();
-vi.mock("@/features/access/server/runtime", () => ({ getAccessPolicy: () => ({ can }) }));
 vi.mock("../server/runtime", () => ({ getProjects: () => ({ open, visibleTo }) }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ host: "hub.test" }) }));
 vi.mock("next/navigation", () => ({
@@ -55,7 +53,6 @@ beforeEach(() => {
   currentViewer.mockResolvedValue({ userId: "u1", login: "octo" });
   open.mockResolvedValue(project());
   visibleTo.mockResolvedValue([project()]);
-  can.mockResolvedValue(false);
 });
 afterEach(() => vi.clearAllMocks());
 
@@ -88,12 +85,11 @@ describe("ProjectContent", () => {
     show((await ProjectContent({ params: params() })) as ReactElement);
     expect(screen.getByText("Nothing can be shown until they are fixed.")).toBeInTheDocument();
   });
-  it("links to the settings for a user who manages the project, and only for them", async () => {
-    show((await ProjectContent({ params: params() })) as ReactElement);
+  it("lists the project's settings in the sidebar for a user who manages it, and only for them", async () => {
+    show((await ProjectContent({ params: params() })) as ReactElement).unmount();
     expect(screen.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
-    can.mockResolvedValue(true);
+    visibleTo.mockResolvedValue([project({ canManage: true })]);
     show((await ProjectContent({ params: params() })) as ReactElement);
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings/acme/web");
-    expect(can).toHaveBeenCalledWith(expect.objectContaining({ owner: "acme" }), "octo", "manage_hosts");
   });
 });

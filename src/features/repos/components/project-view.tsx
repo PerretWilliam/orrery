@@ -1,17 +1,13 @@
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { buttonVariants } from "@/components/ui/button-variants";
 import { accentStyle } from "@/lib/accent";
 import { WidgetGrid } from "@/features/widgets/components/widget-grid";
-import { settingsPath } from "@/features/project-settings/domain/hosts";
-import { projectPath } from "../domain/project";
 import type { Project } from "../server/projects";
 
 type Page = NonNullable<Project["config"]>["pages"][number];
 
-/** A project: its title, the problems with its config file, the tabs for its pages, and the selected page. Everything from the repository is shown as text. */
-export function ProjectView({ project, page, canManage = false }: { project: Project; page: Page | null; canManage?: boolean }) {
+/** A project: its title, the problems with its config file, and the selected page. Everything from the repository is shown as text. */
+export function ProjectView({ project, page }: { project: Project; page: Page | null }) {
   const t = useTranslations("Shell");
   return (
     <div className="contents" style={accentStyle(project.color)}>
@@ -20,13 +16,7 @@ export function ProjectView({ project, page, canManage = false }: { project: Pro
         <span className="text-sm text-muted-foreground">
           {project.owner}/{project.name}
         </span>
-        {project.isPrivate ? <span className="rounded border px-1.5 text-xs">{t("private")}</span> : null}
         {project.archived ? <span className="rounded border px-1.5 text-xs">{t("archived")}</span> : null}
-        {canManage ? (
-          <Link href={settingsPath(project)} className={buttonVariants({ variant: "ghost", size: "sm" })}>
-            {t("settings")}
-          </Link>
-        ) : null}
       </div>
       {project.issues.length > 0 ? (
         <Alert variant="destructive">
@@ -44,23 +34,7 @@ export function ProjectView({ project, page, canManage = false }: { project: Pro
           </AlertDescription>
         </Alert>
       ) : null}
-      {project.config && page ? (
-        <>
-          <nav aria-label={t("pages")} className="flex flex-wrap gap-1">
-            {project.config.pages.map((candidate) => (
-              <Link
-                key={candidate.id}
-                href={projectPath(project, candidate.id)}
-                aria-current={candidate.id === page.id ? "page" : undefined}
-                className={buttonVariants({ variant: candidate.id === page.id ? "secondary" : "ghost", size: "sm" })}
-              >
-                {candidate.title}
-              </Link>
-            ))}
-          </nav>
-          <WidgetGrid project={{ id: project.id, owner: project.owner, name: project.name, config: project.config }} widgets={page.widgets} />
-        </>
-      ) : null}
+      {project.config && page ? <WidgetGrid project={{ id: project.id, owner: project.owner, name: project.name, config: project.config }} widgets={page.widgets} /> : null}
     </div>
   );
 }
