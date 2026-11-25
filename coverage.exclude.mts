@@ -31,6 +31,8 @@ export const coverageExclude = [
   "src/features/audit/server/drizzle-store.ts",
   // Drizzle implementation of the project settings store: SQL only, exercised on a real Postgres by tests/integration/project-settings-store.test.ts.
   "src/features/project-settings/server/drizzle-store.ts",
+  // Drizzle implementation of the admin settings store: SQL only, exercised on a real Postgres by tests/integration/admin-store.test.ts.
+  "src/features/admin-settings/server/drizzle-store.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];

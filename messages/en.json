@@ -30,7 +30,11 @@
     "projects": "Projects",
     "signOut": "Sign out",
     "themeSwitch": "Theme: {theme}. Switch theme.",
-    "theme": { "system": "System", "light": "Light", "dark": "Dark" },
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "pages": "Pages",
     "emptyTitle": "No projects yet",
     "emptyBody": "A repository shows up here once it has a .hub.yml file on its default branch and the GitHub App can read it.",
@@ -100,5 +104,40 @@
       "degraded": "Degraded",
       "down": "Down"
     }
+  },
+  "Admin": {
+    "title": "Instance settings",
+    "saved": "Saved.",
+    "errorTitle": "The change could not be made",
+    "add": "Add",
+    "remove": "Remove",
+    "signInTitle": "Who may sign in",
+    "signInIntro": "Level 1 of the access policy. Entries are org:<login>, team:<org>/<slug> or user:<login>. GitHub's own permissions still apply: the hub only narrows.",
+    "signInEmpty": "The list is empty: nobody can sign in except admins.",
+    "signInLabel": "Entry",
+    "rulesTitle": "Project rules",
+    "rulesIntro": "Level 2. Hide a project from everyone, or restrict it to a user or a team. Hiding wins over everything.",
+    "rulesEmpty": "No rule: GitHub decides who sees each project.",
+    "ruleProject": "Project (owner/name)",
+    "ruleEffect": "Effect",
+    "ruleHide": "Hide",
+    "ruleRestrict": "Restrict to",
+    "ruleSubject": "User or team (to restrict)",
+    "hostsTitle": "Private hosts allowed",
+    "hostsIntro": "Hosts, suffixes, addresses or CIDR ranges that sources may reach even though they are private. Only an admin can open one.",
+    "hostsEmpty": "None: private addresses are refused everywhere.",
+    "hostLabel": "Host, *.suffix, address or range",
+    "adminsTitle": "Admins",
+    "adminsIntro": "Admins manage everything on this page. ORRERY_ADMINS adds admins again at every start.",
+    "adminLabel": "GitHub username",
+    "keysTitle": "Encryption key",
+    "keysIntro": "After adding a new active key to ORRERY_ENCRYPTION_KEYS (keep the old ones after it), re-encrypt everything with it.",
+    "keysStatus": "Active key: {active}. Still on another key: {pending, number}.",
+    "keysUnavailable": "The encryption keys could not be read.",
+    "rotate": "Re-encrypt with the active key",
+    "auditTitle": "Audit log",
+    "auditIntro": "The 50 latest entries. Entries are kept for a year and cannot be changed.",
+    "auditEmpty": "Nothing recorded yet.",
+    "auditSystem": "system"
   }
 }
