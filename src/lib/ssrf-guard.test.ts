@@ -850,6 +850,23 @@ describe("guardedFetch", () => {
       }),
     );
   });
+  it("does not send when the signal is already aborted, even after a slow DNS answer", async () => {
+    const send = scripted(ok());
+    const controller = new AbortController();
+    const slow: Resolver = async (host) => {
+      controller.abort(new Error("late"));
+      return resolve(host);
+    };
+    await expect(
+      guardedFetch(
+        "https://example.com/",
+        { signal: controller.signal },
+        {},
+        { resolve: slow, send },
+      ),
+    ).rejects.toThrow("late");
+    expect(send).not.toHaveBeenCalled();
+  });
   it("never sends a blocked request", async () => {
     const send = scripted();
     expect(await codeOf(run("http://127.0.0.1/", send))).toBe(
