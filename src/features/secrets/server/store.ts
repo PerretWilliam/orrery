@@ -22,3 +22,8 @@ export type SecretsStore = {
   /** `true` when a secret was deleted. */
   remove(repositoryId: string, name: string): Promise<boolean>;
 };
+
+/** For the data proxy only: the stored values of a project, still encrypted. Never reaches a page or a response. */
+export type SecretsReader = {
+  encrypted(repositoryId: string): Promise<{ name: string; ciphertext: string; boundHosts: string[] }[]>;
+};

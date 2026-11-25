@@ -51,7 +51,7 @@ export function ProjectView({ project, page }: { project: Project; page: Page | 
               </Link>
             ))}
           </nav>
-          <WidgetGrid widgets={page.widgets} />
+          <WidgetGrid project={{ id: project.id, config: project.config }} widgets={page.widgets} />
         </>
       ) : null}
     </>

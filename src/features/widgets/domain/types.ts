@@ -4,4 +4,6 @@ import type { ConfigV1 } from "@/features/config/domain/schema-v1";
 export type Widget = ConfigV1["pages"][number]["widgets"][number];
 export type WidgetType = Widget["type"];
 export type WidgetOf<T extends WidgetType> = Extract<Widget, { type: T }>;
-export type WidgetProps<T extends WidgetType = WidgetType> = { widget: WidgetOf<T> };
+/** `data` is what the widget's source answered (untrusted, read with the safe path extractor), or `null` for a widget without a source. */
+export type WidgetProps<T extends WidgetType = WidgetType> = { widget: WidgetOf<T>; data: unknown };
+export type AnyWidgetProps = { widget: Widget; data: unknown };

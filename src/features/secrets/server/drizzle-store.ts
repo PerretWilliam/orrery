@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { Db } from "@/lib/db/client";
 import { repositories, secrets } from "@/lib/db/schema";
-import type { SecretsStore } from "./store";
+import type { SecretsReader, SecretsStore } from "./store";
 
 /** Drizzle implementation of `SecretsStore`. Excluded from unit coverage; tests/integration/secrets-store.test.ts runs it on Postgres. */
 export function createSecretsStore(db: Db): SecretsStore {
@@ -31,6 +31,15 @@ export function createSecretsStore(db: Db): SecretsStore {
     async remove(repositoryId, name) {
       const gone = await db.delete(secrets).where(and(eq(secrets.repositoryId, repositoryId), eq(secrets.name, name))).returning({ id: secrets.id });
       return gone.length > 0;
+    },
+  };
+}
+
+/** Drizzle implementation of `SecretsReader`; excluded from unit coverage like `createSecretsStore`. */
+export function createSecretsReader(db: Db): SecretsReader {
+  return {
+    async encrypted(repositoryId) {
+      return db.select({ name: secrets.name, ciphertext: secrets.ciphertext, boundHosts: secrets.boundHosts }).from(secrets).where(eq(secrets.repositoryId, repositoryId));
     },
   };
 }
