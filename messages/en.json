@@ -46,7 +46,8 @@
     "issuesNeverValid": "Nothing can be shown until they are fixed.",
     "issuePath": "Path",
     "issueFix": "Fix",
-    "noWidgets": "This page has no widgets yet."
+    "noWidgets": "This page has no widgets yet.",
+    "tokens": "Agent tokens"
   },
   "Secrets": {
     "title": "Secrets of {project}",
@@ -139,5 +140,26 @@
     "auditIntro": "The 50 latest entries. Entries are kept for a year and cannot be changed.",
     "auditEmpty": "Nothing recorded yet.",
     "auditSystem": "system"
+  },
+  "Tokens": {
+    "title": "Agent tokens",
+    "intro": "Tokens let an AI agent read what you can read, and nothing more. They are read-only, expire, and stop working if you lose access.",
+    "createdTitle": "Your new token",
+    "createdBody": "Copy it now: it is shown once and cannot be recovered.",
+    "saved": "Saved.",
+    "errorTitle": "The token could not be created",
+    "listTitle": "Your tokens",
+    "empty": "No tokens yet.",
+    "active": "active",
+    "expired": "expired",
+    "revoked": "revoked",
+    "dates": "Created {created}, expires {expires}, last used {used}",
+    "never": "never",
+    "revoke": "Revoke",
+    "formTitle": "Create a token",
+    "formHelp": "Lifetime: {days} days by default, {max} at most.",
+    "name": "Label",
+    "days": "Lifetime in days",
+    "create": "Create"
   }
 }

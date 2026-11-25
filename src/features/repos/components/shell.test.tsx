@@ -39,6 +39,7 @@ describe("AppShell", () => {
     expect(screen.getByText("content")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign out" }).closest("form")).toHaveAttribute("action", "/auth/sign-out");
     expect(screen.getByRole("link", { name: "Orrery" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Agent tokens" })).toHaveAttribute("href", "/account/tokens");
   });
   it("marks nothing without a current project", () => {
     show(<AppShell projects={[project()]}>x</AppShell>);
