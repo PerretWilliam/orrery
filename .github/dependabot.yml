@@ -22,3 +22,7 @@ updates:
     directory: /
     schedule: { interval: weekly }
     commit-message: { prefix: "chore(deps)" }
+    ignore:
+      # Same rule as @types/node above: the image's Node major moves with .nvmrc, engines and the types.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
