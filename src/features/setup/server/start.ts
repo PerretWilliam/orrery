@@ -1,3 +1,4 @@
+import { startAuditPurgeJob } from "@/features/audit/server/runtime";
 import { createAccessStore } from "@/features/access/server/drizzle-store";
 import { seedAccess } from "@/features/access/server/seed";
 import { startCachePurgeJob } from "@/features/data-proxy/server/runtime";
@@ -20,5 +21,6 @@ export async function startInstance(): Promise<void> {
   if (process.env.DATABASE_URL) {
     startDiscovery();
     startCachePurgeJob();
+    startAuditPurgeJob();
   }
 }

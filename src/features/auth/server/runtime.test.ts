@@ -21,6 +21,8 @@ vi.mock("./drizzle-store", () => ({ createAuthStore: (db: unknown) => (db === "d
 vi.mock("better-auth/adapters/drizzle", () => ({ drizzleAdapter: (db: unknown, options: unknown) => ({ adapter: { db, options } }) }));
 vi.mock("@/features/setup/server/runtime", () => ({ getSetupService: () => setup }));
 vi.mock("@/features/access/server/runtime", () => ({ getAccessPolicy: () => access }));
+const record = vi.fn();
+vi.mock("@/features/audit/server/runtime", () => ({ getAudit: () => ({ record }) }));
 vi.mock("./auth-secret", () => ({ loadAuthSecret: async () => "stored-secret" }));
 vi.mock("./better-auth", () => ({ createAuth: (config: unknown) => createAuth(config), githubAccessToken: (...args: unknown[]) => githubAccessToken(...args) }));
 
@@ -145,5 +147,16 @@ describe("currentViewer", () => {
     auth.api.getSession.mockResolvedValue({ session, user: { id: "u1" } });
     store.userState.mockResolvedValue({ login: null, suspendedAt: null });
     expect(await currentViewer(headers("viewer-nologin.test"))).toBeNull();
+  });
+});
+
+describe("sign-in audit", () => {
+  it("records each accepted sign-in with the user's login", async () => {
+    await getAuthContext(headers("audit.test"));
+    const { service } = createAuth.mock.calls[0][0] as { service: { startSession: (id: string, claim?: string) => Promise<boolean> } };
+    store.userState.mockResolvedValue({ login: "octo", suspendedAt: null });
+    store.isAdmin.mockResolvedValue(true);
+    expect(await service.startSession("u1")).toBe(true);
+    expect(record).toHaveBeenCalledWith({ event: "sign_in", actor: "octo" });
   });
 });

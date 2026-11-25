@@ -1,3 +1,4 @@
+import { getAudit } from "@/features/audit/server/runtime";
 import { getAccessPolicy } from "@/features/access/server/runtime";
 import { keyringFromEnv } from "@/lib/crypto";
 import { getDb } from "@/lib/db/instance";
@@ -12,5 +13,6 @@ export const getSecrets = () =>
       keyring: () => keyringFromEnv(),
       canManage: (repo, login) => getAccessPolicy().can(repo, login, "manage_secrets"),
       now: () => new Date(),
+      audit: (event) => getAudit().record(event),
     }),
   );

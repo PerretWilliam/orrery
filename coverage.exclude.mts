@@ -27,6 +27,8 @@ export const coverageExclude = [
   "src/features/data-proxy/server/drizzle-store.ts",
   // Drizzle implementation of the secrets store: SQL only, exercised on a real Postgres by tests/integration/secrets-store.test.ts.
   "src/features/secrets/server/drizzle-store.ts",
+  // Drizzle implementation of the audit store and its append-only trigger: SQL only, exercised on a real Postgres by tests/integration/audit-store.test.ts.
+  "src/features/audit/server/drizzle-store.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];

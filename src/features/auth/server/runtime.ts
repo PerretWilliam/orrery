@@ -1,5 +1,6 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getAccessPolicy } from "@/features/access/server/runtime";
+import { getAudit } from "@/features/audit/server/runtime";
 import { instanceOrigin } from "@/features/setup/server/http";
 import { getSetupService } from "@/features/setup/server/runtime";
 import { SETTINGS_CONTEXT } from "@/features/setup/server/service";
@@ -29,6 +30,7 @@ async function build(baseURL: string): Promise<AuthContext | null> {
     canSignIn: (login) => getAccessPolicy().canSignIn(login),
     fetchAccessToken: (userId) => githubAccessToken(holder.auth as Auth, store, userId),
     now: () => new Date(),
+    onSignIn: (login) => getAudit().record({ event: "sign_in", actor: login }),
   });
   holder.auth = createAuth({
     database: drizzleAdapter(db, { provider: "pg", schema: { user, session, account, verification } }),
