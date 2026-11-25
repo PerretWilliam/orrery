@@ -36,6 +36,7 @@
     "emptyBody": "A repository shows up here once it has a .hub.yml file on its default branch and the GitHub App can read it.",
     "private": "Private",
     "archived": "Archived",
+    "settings": "Settings",
     "issuesTitle": "The configuration file has problems",
     "issuesShowingLast": "Showing the last valid version until they are fixed.",
     "issuesNeverValid": "Nothing can be shown until they are fixed.",
@@ -58,6 +59,24 @@
     "value": "Value",
     "hostsLabel": "Hosts (separated by spaces or commas)",
     "save": "Save"
+  },
+  "ProjectSettings": {
+    "title": "Settings of {project}",
+    "link": "Settings",
+    "saved": "Saved.",
+    "errorTitle": "The change could not be made",
+    "hostsTitle": "Allowed hosts",
+    "hostsIntro": "Without any entry, sources may reach every public host the instance allows. With entries, they may only reach the hosts listed here. A project can narrow what is allowed, never open more.",
+    "hostsEmpty": "No restriction: every public host is allowed.",
+    "hostLabel": "Host (api.example.com or *.example.com)",
+    "add": "Add",
+    "remove": "Remove",
+    "secretsTitle": "Secrets",
+    "secretsBody": "Write-only values bound to the hosts they may be sent to.",
+    "secretsOpen": "Manage secrets",
+    "reindexTitle": "Re-index",
+    "reindexBody": "Read the configuration file again from GitHub now, instead of waiting for the next push or poll.",
+    "reindex": "Re-index now"
   },
   "Widgets": {
     "loading": "Loading…",

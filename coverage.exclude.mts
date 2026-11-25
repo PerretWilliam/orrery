@@ -29,6 +29,8 @@ export const coverageExclude = [
   "src/features/secrets/server/drizzle-store.ts",
   // Drizzle implementation of the audit store and its append-only trigger: SQL only, exercised on a real Postgres by tests/integration/audit-store.test.ts.
   "src/features/audit/server/drizzle-store.ts",
+  // Drizzle implementation of the project settings store: SQL only, exercised on a real Postgres by tests/integration/project-settings-store.test.ts.
+  "src/features/project-settings/server/drizzle-store.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];

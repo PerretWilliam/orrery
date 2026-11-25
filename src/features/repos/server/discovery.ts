@@ -87,12 +87,15 @@ export function createDiscovery({ git, store, now }: { git: Git; store: Store; n
       return queued;
     },
 
-    /** One repository, after a push. A repository the hub has never seen means the App's repositories changed: everything is looked at. */
-    refresh(repo: RepoRef): Promise<SyncReport> {
+    /**
+     * One repository, after a push. A repository the hub has never seen means the App's repositories changed: everything
+     * is looked at. `force` forgets the stored ETag so the file is read again and parsed even if GitHub says it is unchanged.
+     */
+    refresh(repo: RepoRef, { force = false }: { force?: boolean } = {}): Promise<SyncReport> {
       return serial(async () => {
         const row = await store.find(repo);
         if (!row) return run();
-        await check(row.summary, row.stored);
+        await check(row.summary, force ? { ...row.stored, configEtag: null } : row.stored);
         return { checked: 1, failed: 0 };
       });
     },
