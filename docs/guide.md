@@ -11,20 +11,22 @@ Orrery is a self-hosted web app that turns each GitHub repository into a live co
 
 ## Install
 
-Orrery runs as one Node.js process next to PostgreSQL. Until the Docker image is published (see the distribution card of the roadmap), run it from source:
+The reference deployment is Docker Compose: Orrery and PostgreSQL, from the image `ghcr.io/perretwilliam/orrery` (`linux/amd64` and `linux/arm64`, published with each release).
 
 ```bash
-git clone https://github.com/PerretWilliam/orrery.git && cd orrery
-npm ci && npm run build
-export DATABASE_URL=postgres://orrery:secret@localhost:5432/orrery
-export ORRERY_ENCRYPTION_KEYS="k1:$(openssl rand -base64 32)"
-export ORRERY_PUBLIC_URL=https://hub.example.com
-npm start
+curl -O https://raw.githubusercontent.com/PerretWilliam/orrery/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/PerretWilliam/orrery/main/.env.example
+cp .env.example .env   # set POSTGRES_PASSWORD and ORRERY_ENCRYPTION_KEYS, see below
+docker compose up -d
 ```
 
-On start, Orrery applies its database migrations, then prints a line `Orrery is not set up yet` with a **setup token** (unless you set `ORRERY_SETUP_TOKEN`). Open `/setup`, enter the token, and follow the wizard: it creates the GitHub App through a manifest and makes you the instance admin. Then sign in with GitHub and install the GitHub App on the accounts or repositories you want to see.
+Pin a version in `docker-compose.yml` (for example `:0.2.0`) instead of `latest`, and put a TLS reverse proxy in front of port 3000.
+
+On start, Orrery applies its database migrations, then prints a line `Orrery is not set up yet` with a **setup token** (unless you set `ORRERY_SETUP_TOKEN`); read it with `docker compose logs orrery`. Open `/setup`, enter the token, and follow the wizard: it creates the GitHub App through a manifest and makes you the instance admin. Then sign in with GitHub and install the GitHub App on the accounts or repositories you want to see.
 
 Keep `ORRERY_ENCRYPTION_KEYS` safe and backed up separately from the database: without it, the stored GitHub tokens and secrets cannot be read.
+
+To build the image yourself, run `docker build -t orrery .`. To run without Docker, use Node.js 24: `npm ci && npm run build && npm start` with the environment variables below.
 
 ## Environment variables
 
@@ -41,7 +43,7 @@ Keep `ORRERY_ENCRYPTION_KEYS` safe and backed up separately from the database: w
 ## Upgrade
 
 1. Back up the database (below).
-2. Pull the new version (or image tag), rebuild if running from source, restart.
+2. Change the image tag in `docker-compose.yml`, then `docker compose pull && docker compose up -d`.
 3. Migrations run automatically at start. They only move forward, so go back by restoring the backup.
 
 Read the changelog first: a release can change something that needs your attention.
@@ -51,14 +53,13 @@ Read the changelog first: a release can change something that needs your attenti
 All state is in PostgreSQL, so a database dump is a full backup. Keep `ORRERY_ENCRYPTION_KEYS` with it (in a secret store, not next to the dump).
 
 ```bash
-pg_dump --format=custom --file=orrery.dump "$DATABASE_URL"
+docker compose exec -T db pg_dump -U orrery --format=custom orrery > orrery.dump
 ```
 
-Restore into an empty database, then start Orrery on it:
+Restore into the database (stop Orrery first with `docker compose stop orrery`, start it again after):
 
 ```bash
-createdb orrery_restored
-pg_restore --no-owner --dbname=orrery_restored orrery.dump
+docker compose exec -T db pg_restore -U orrery --no-owner --clean --if-exists -d orrery < orrery.dump
 ```
 
 Test a restore now and then. The audit log is append-only in the database and is part of the dump.
