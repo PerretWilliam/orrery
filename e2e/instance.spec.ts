@@ -197,6 +197,9 @@ test.describe("once the instance is set up", () => {
     await expect(
       page.getByRole("alert").filter({ hasText: "Gone" }),
     ).toContainText("ssrf_dns_failed");
+    // Nothing is cut off: a cell grows to fit what its widget says, and long lists scroll inside theirs.
+    const cut = await page.getByRole("alert").filter({ hasText: "Gone" }).evaluate((card) => card.scrollHeight - card.clientHeight);
+    expect(cut).toBe(0);
     await expect(page.getByRole("link", { name: "v0.1.0 Release 1" })).toBeVisible();
     await context.close();
   });

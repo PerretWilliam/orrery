@@ -4,6 +4,9 @@ import { cohortRows } from "../../domain/cohort";
 import type { WidgetProps } from "../../domain/types";
 import { WidgetEmpty } from "../widget-states";
 
+/** The darkest cell, in percent of the primary colour: beyond this the number on it stops being readable (4.5:1) in either theme. */
+const MAX_SHADE = 40;
+
 /** Retention matrix: a row per cohort, a column per day. The number is always written; the shade only helps the eye. */
 export default function Cohort({ widget, data }: WidgetProps<"cohort">) {
   const t = useTranslations("Widgets");
@@ -14,7 +17,7 @@ export default function Cohort({ widget, data }: WidgetProps<"cohort">) {
   return (
     <Card className="h-full">
       <CardHeader>{widget.title ? <CardTitle>{widget.title}</CardTitle> : null}</CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-auto">
+      <CardContent className="min-h-0 flex-1 overflow-auto md:[contain:size]">
         <table className="w-full border-separate border-spacing-0.5 text-xs tabular-nums">
           <thead>
             <tr>
@@ -40,7 +43,7 @@ export default function Cohort({ widget, data }: WidgetProps<"cohort">) {
                     <td
                       key={day}
                       className="rounded-sm px-1 py-0.5 text-center"
-                      style={value === null ? undefined : { backgroundColor: `color-mix(in oklab, var(--primary) ${Math.round(Math.min(Math.max(value, 0), 1) * 80)}%, transparent)` }}
+                      style={value === null ? undefined : { backgroundColor: `color-mix(in oklab, var(--primary) ${Math.round(Math.min(Math.max(value, 0), 1) * MAX_SHADE)}%, transparent)` }}
                     >
                       {value === null ? "–" : format.number(value, { style: "percent", maximumFractionDigits: 1 })}
                     </td>

@@ -10,7 +10,8 @@ export function ChartFrame({ title, children }: { title: string | undefined; chi
           <CardTitle>{title}</CardTitle>
         </CardHeader>
       ) : null}
-      <CardContent className="min-h-0 flex-1">{children}</CardContent>
+      {/* The chart fills the cell: a fixed aspect ratio would stretch the grid's rows to match its width. */}
+      <CardContent className="min-h-0 flex-1 *:aspect-auto *:min-h-40">{children}</CardContent>
     </Card>
   );
 }

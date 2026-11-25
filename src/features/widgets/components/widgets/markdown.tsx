@@ -60,7 +60,7 @@ export default function Markdown({ widget, data }: WidgetProps<"markdown">) {
   const blocks = typeof found === "string" ? parseMarkdown(found) : [];
   if (blocks.length === 0) return <WidgetEmpty title={widget.title} />;
   return (
-    <Card className="h-full overflow-auto">
+    <Card className="h-full overflow-auto md:[contain:size]">
       {widget.title ? (
         <CardHeader>
           <CardTitle>{widget.title}</CardTitle>
