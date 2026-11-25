@@ -12,9 +12,9 @@ type Loaders = { readonly [T in WidgetType]: () => Promise<{ default: ComponentT
 export const LOADERS: Loaders = {
   kpi: () => import("./widgets/kpi"),
   status: () => import("./widgets/status"),
-  line: () => import("./widgets/placeholder"),
-  bar: () => import("./widgets/placeholder"),
-  donut: () => import("./widgets/placeholder"),
+  line: () => import("./widgets/line"),
+  bar: () => import("./widgets/bar"),
+  donut: () => import("./widgets/donut"),
   table: () => import("./widgets/placeholder"),
   cohort: () => import("./widgets/placeholder"),
   markdown: () => import("./widgets/markdown"),
