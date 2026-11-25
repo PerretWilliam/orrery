@@ -6,7 +6,8 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const dir = mkdtempSync(join(tmpdir(), "orrery-cli-"));
-const run = (...args: string[]) => spawnSync("node", ["dist/cli/orrery.cjs", ...args], { encoding: "utf8" });
+const run = (...args: string[]) =>
+  spawnSync("node", ["dist/cli/orrery.cjs", ...args], { encoding: "utf8" });
 
 beforeAll(() => {
   execFileSync("node", ["scripts/build-cli.mjs"]);
@@ -18,16 +19,51 @@ describe("bundled orrery CLI", () => {
     const good = join(dir, "good.yml");
     const bad = join(dir, "bad.yml");
     const huge = join(dir, "huge.yml");
-    writeFileSync(good, "version: 1\nproject: { name: X }\npages: [{ id: p, title: P, widgets: [] }]\n");
+    writeFileSync(
+      good,
+      "version: 1\nproject: { name: X }\npages: [{ id: p, title: P, widgets: [] }]\n",
+    );
     writeFileSync(bad, "version: 1\nextra: 1\n");
     writeFileSync(huge, "#".repeat(10 * 1024 * 1024));
 
-    expect(run("validate", good)).toMatchObject({ status: 0, stdout: `${good} is valid\n` });
+    expect(run("validate", good)).toMatchObject({
+      status: 0,
+      stdout: `${good} is valid\n`,
+    });
     const invalid = run("validate", bad);
     expect(invalid.status).toBe(1);
     expect(invalid.stderr).toContain(`${bad}:2 extra [config_unknown_field]`);
     expect(run("validate", huge).stderr).toContain("[config_too_large]");
-    expect(run("validate", join(dir, "missing.yml"))).toMatchObject({ status: 2, stderr: expect.stringContaining("ENOENT") });
+    expect(run("validate", join(dir, "missing.yml"))).toMatchObject({
+      status: 2,
+      stderr: expect.stringContaining("ENOENT"),
+    });
     expect(run().status).toBe(2);
+  });
+
+  it("routes preview to its own command", () => {
+    expect(run("preview")).toMatchObject({
+      status: 2,
+      stderr: expect.stringContaining("Usage: orrery preview"),
+    });
+    const env = {
+      ...process.env,
+      ORRERY_URL: "http://127.0.0.1:9",
+      ORRERY_TOKEN: "t",
+    };
+    const unreachable = spawnSync(
+      "node",
+      [
+        "dist/cli/orrery.cjs",
+        "preview",
+        "--project",
+        "o/r",
+        "--source",
+        "s",
+        join(dir, "missing.yml"),
+      ],
+      { encoding: "utf8", env },
+    );
+    expect(unreachable.stderr).toContain("ENOENT");
   });
 });

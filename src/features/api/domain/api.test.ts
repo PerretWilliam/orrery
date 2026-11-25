@@ -4,13 +4,29 @@ import { openApiDocument } from "./openapi";
 import { createRateLimiter } from "./rate-limit";
 
 describe("API error catalog", () => {
-  it("pins the released codes", () => expect(Object.keys(API_ERRORS)).toEqual(["api_unauthorized", "api_rate_limited", "api_not_found"]));
+  it("pins the released codes", () =>
+    expect(Object.keys(API_ERRORS)).toEqual([
+      "api_unauthorized",
+      "api_rate_limited",
+      "api_forbidden",
+      "api_invalid_request",
+      "api_not_found",
+    ]));
   it("answers with code, path, message and fix, uncached", async () => {
-    const response = apiError("api_not_found", { "x-a": "1" });
+    const response = apiError("api_not_found", { "x-a": "1" }, "yaml");
     expect(response.status).toBe(404);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-a")).toBe("1");
-    expect(await response.json()).toEqual({ errors: [{ code: "api_not_found", path: "", message: API_ERRORS.api_not_found.message, fix: API_ERRORS.api_not_found.fix }] });
+    expect(await response.json()).toEqual({
+      errors: [
+        {
+          code: "api_not_found",
+          path: "yaml",
+          message: API_ERRORS.api_not_found.message,
+          fix: API_ERRORS.api_not_found.fix,
+        },
+      ],
+    });
   });
 });
 
@@ -33,13 +49,19 @@ describe("rate limiter", () => {
     for (let i = 0; i < 600; i++) expect(limiter.take("k").ok).toBe(true);
     expect(limiter.take("k").ok).toBe(false);
   });
-  it("uses the clock by default", () => expect(createRateLimiter().take("x")).toEqual({ ok: true }));
+  it("uses the clock by default", () =>
+    expect(createRateLimiter().take("x")).toEqual({ ok: true }));
 });
 
 describe("OpenAPI document", () => {
-  it("describes the three read routes and every $ref resolves", () => {
-    expect(Object.keys(openApiDocument.paths)).toHaveLength(3);
-    const refs = [...JSON.stringify(openApiDocument).matchAll(/"\$ref":"#\/components\/schemas\/(\w+)"/g)].map((m) => m[1]);
-    for (const name of refs) expect(Object.keys(openApiDocument.components.schemas)).toContain(name);
+  it("describes the four routes and every $ref resolves", () => {
+    expect(Object.keys(openApiDocument.paths)).toHaveLength(4);
+    const refs = [
+      ...JSON.stringify(openApiDocument).matchAll(
+        /"\$ref":"#\/components\/schemas\/(\w+)"/g,
+      ),
+    ].map((m) => m[1]);
+    for (const name of refs)
+      expect(Object.keys(openApiDocument.components.schemas)).toContain(name);
   });
 });

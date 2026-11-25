@@ -251,6 +251,13 @@ export function createSourceProxy({
       };
     },
 
+    /** A dry run: asks the source now, through the same policy and secret binding, and neither reads nor writes the cache. Never rejects. */
+    preview: (req: ProxyRequest): Promise<ProxyResult> =>
+      request(req).catch((error: unknown): ProxyResult => ({
+        ok: false,
+        errors: toFailures(error),
+      })),
+
     purge: () => purgeUnused(store, now),
   };
 }
