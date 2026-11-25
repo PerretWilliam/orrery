@@ -1,15 +1,17 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
-import { WidgetCrashed } from "./widget-states";
 
-/** One per widget: a widget that throws while drawing is replaced by a card, and the rest of the page is untouched. */
-export class WidgetBoundary extends Component<{ title?: string; children: ReactNode }, { failed: boolean }> {
+/**
+ * One per widget: a widget that throws while drawing is replaced by `fallback`, and the rest of the page is untouched.
+ * The fallback is built on the server and handed in, so this client file pulls in no translation code.
+ */
+export class WidgetBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
   }
   render() {
-    return this.state.failed ? <WidgetCrashed title={this.props.title} /> : this.props.children;
+    return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
