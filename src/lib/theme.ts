@@ -14,8 +14,8 @@ export const nextTheme = (theme: Theme): Theme => THEMES[(THEMES.indexOf(theme) 
 
 /**
  * Runs in `<head>` before the first paint, so a dark page never flashes white. It only reads the stored choice and
- * toggles the `dark` class: it never throws (private mode, blocked storage) and sends nothing anywhere.
+ * toggles the `dark` class (its literals must match THEME_KEY and DARK_QUERY, a test checks it): it never throws (private mode, blocked storage) and sends nothing anywhere.
  */
-export const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_KEY)});var d=t==="dark"||(t!=="light"&&matchMedia(${JSON.stringify(DARK_QUERY)}).matches);document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
+export const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem("orrery-theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
 
 export const systemDarkQuery = () => matchMedia(DARK_QUERY);
