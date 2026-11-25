@@ -1,0 +1,245 @@
+{
+  "players": {
+    "total": 12840,
+    "delta": 312
+  },
+  "retention": {
+    "d7": 16.2,
+    "d7_delta": -1.4
+  },
+  "revenue": {
+    "today": 4821.5,
+    "delta": 0,
+    "plan": "Studio"
+  },
+  "services": {
+    "api": "ok",
+    "queue": "slow",
+    "billing": "down"
+  },
+  "daily": [
+    {
+      "date": "11-01",
+      "players": 120,
+      "sessions": 360
+    },
+    {
+      "date": "11-02",
+      "players": 180,
+      "sessions": 480
+    },
+    {
+      "date": "11-03",
+      "players": 150,
+      "sessions": 330
+    },
+    {
+      "date": "11-04",
+      "players": 260,
+      "sessions": 600
+    },
+    {
+      "date": "11-05",
+      "players": 240,
+      "sessions": 720
+    },
+    {
+      "date": "11-06",
+      "players": 310,
+      "sessions": 870
+    },
+    {
+      "date": "11-07",
+      "players": 290,
+      "sessions": 750
+    },
+    {
+      "date": "11-08",
+      "players": 330,
+      "sessions": 810
+    },
+    {
+      "date": "11-09",
+      "players": 360,
+      "sessions": 1080
+    },
+    {
+      "date": "11-10",
+      "players": 340,
+      "sessions": 960
+    },
+    {
+      "date": "11-11",
+      "players": 410,
+      "sessions": 1110
+    },
+    {
+      "date": "11-12",
+      "players": 430,
+      "sessions": 1110
+    },
+    {
+      "date": "11-13",
+      "players": 390,
+      "sessions": 1170
+    },
+    {
+      "date": "11-14",
+      "players": 470,
+      "sessions": 1350
+    }
+  ],
+  "platforms": [
+    {
+      "platform": "PC",
+      "players": 540
+    },
+    {
+      "platform": "Console",
+      "players": 300
+    },
+    {
+      "platform": "Mobile",
+      "players": 160
+    },
+    {
+      "platform": "Web",
+      "players": 70
+    }
+  ],
+  "cohorts": [
+    {
+      "week": "W40",
+      "retention": [
+        100,
+        52,
+        41,
+        33,
+        28,
+        24,
+        21
+      ]
+    },
+    {
+      "week": "W41",
+      "retention": [
+        100,
+        51,
+        40,
+        32,
+        27,
+        23
+      ]
+    },
+    {
+      "week": "W42",
+      "retention": [
+        100,
+        50,
+        39,
+        31,
+        26
+      ]
+    },
+    {
+      "week": "W43",
+      "retention": [
+        100,
+        49,
+        38,
+        30
+      ]
+    },
+    {
+      "week": "W44",
+      "retention": [
+        100,
+        48,
+        37
+      ]
+    },
+    {
+      "week": "W45",
+      "retention": [
+        100,
+        47
+      ]
+    }
+  ],
+  "leaderboard": [
+    {
+      "name": "Ada",
+      "score": 9810,
+      "joined": "2026-03-01",
+      "state": "active"
+    },
+    {
+      "name": "Grace",
+      "score": 8740,
+      "joined": "2026-04-12",
+      "state": "idle"
+    },
+    {
+      "name": "Linus",
+      "score": 6430,
+      "joined": "2026-05-03",
+      "state": "active"
+    },
+    {
+      "name": "Margaret",
+      "score": 6120,
+      "joined": "2026-05-19",
+      "state": "banned"
+    },
+    {
+      "name": "Alan",
+      "score": 5980,
+      "joined": "2026-06-02",
+      "state": "active"
+    },
+    {
+      "name": "Barbara",
+      "score": 5410,
+      "joined": "2026-06-30",
+      "state": "idle"
+    },
+    {
+      "name": "Donald",
+      "score": 4990,
+      "joined": "2026-07-07",
+      "state": "active"
+    },
+    {
+      "name": "Frances",
+      "score": 4720,
+      "joined": "2026-07-25",
+      "state": "active"
+    },
+    {
+      "name": "Dennis",
+      "score": 4100,
+      "joined": "2026-08-14",
+      "state": "idle"
+    },
+    {
+      "name": "Katherine",
+      "score": 3870,
+      "joined": "2026-08-29",
+      "state": "active"
+    },
+    {
+      "name": "Edsger",
+      "score": 3320,
+      "joined": "2026-09-09",
+      "state": "active"
+    },
+    {
+      "name": "A player whose name is far too long to fit in its column without being cut",
+      "score": 2980,
+      "joined": "2026-10-01",
+      "state": "idle"
+    }
+  ],
+  "empty": [],
+  "notes": "## This week\n\n- **Saturday**: double XP\n- Fix the [billing queue](https://github.com)\n\n> Numbers refresh every minute.\n\n```\nnpm run demo\n```"
+}

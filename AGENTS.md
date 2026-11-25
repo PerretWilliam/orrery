@@ -7,6 +7,7 @@ Orrery is a self-hosted web app that turns each GitHub repository into a live co
 ```bash
 npm ci                     # install
 npm run dev                # dev server
+npm run demo               # every screen with a fake GitHub and demo data, nothing to set up, needs Docker (scripts/demo)
 npm run ci:local           # typecheck + lint + coverage + build + bundle budget (run before every PR)
 npm run test               # unit/component tests (Vitest)
 npm run test:security      # one negative test per threat of docs/scope.md (tests/security), also part of coverage
