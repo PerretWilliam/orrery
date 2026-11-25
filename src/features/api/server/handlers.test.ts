@@ -342,6 +342,20 @@ describe("REST API", () => {
       expect(await code(response)).toBe("api_invalid_request");
       expect(preview).not.toHaveBeenCalled();
     });
+    it.each([
+      ["a POST source", "method: POST", { source: "s" }, "source"],
+      ["a method override header", "headers: { X-HTTP-Method-Override: DELETE }", { source: "s" }, "source"],
+      ["another spelling of it", "headers: { x-method-override: PUT }", { source: "s" }, "source"],
+      ["the third one", "headers: { X-HTTP-Method: PUT }", { source: "s" }, "source"],
+      ["the widget of a POST source", "method: POST", { page: "main", index: 0 }, "page"],
+    ])("sends nothing for %s", async (_, extra, target, path) => {
+      const { api, preview } = setup();
+      const yaml = YAML.replace("ttl: 1m", `ttl: 1m, ${extra}`);
+      const response = await api.previewSource(post({ yaml, ...target }), repo);
+      expect(response.status).toBe(400);
+      expect((await response.json()).errors[0]).toMatchObject({ code: "api_preview_get_only", path });
+      expect(preview).not.toHaveBeenCalled();
+    });
     it("answers 400 with the config's own issues when the yaml is invalid", async () => {
       const { api } = setup();
       const response = await api.previewSource(

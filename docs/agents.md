@@ -58,7 +58,7 @@ Offline, with the same parser and errors as the server:
 orrery validate --json .hub.yml
 ```
 
-Against a live instance, with an agent token of a maintainer of the project (`ORRERY_URL` is https unless localhost):
+Against a live instance, with an agent token of a maintainer of the project (`ORRERY_URL` is https unless localhost). Only GET sources can be previewed, since agent tokens are read-only; a POST source is fetched once its file is on the default branch:
 
 ```bash
 ORRERY_URL=https://hub.example ORRERY_TOKEN=orr_... \
@@ -71,7 +71,7 @@ Each error is `{code, path, message, fix}`, identical in the UI, CLI, API and MC
 
 `config_too_large`, `config_syntax`, `config_duplicate_key`, `config_multiple_documents`, `config_alias_limit`, `config_too_deep`, `config_forbidden_key`, `config_not_a_mapping`, `config_required`, `config_unsupported_version`, `config_unknown_field`, `config_invalid_value`, `config_unknown_source`, `config_duplicate_page_id`, `config_duplicate_file`, `config_limit_exceeded`.
 
-API codes: `api_unauthorized` (401), `api_rate_limited` (429), `api_forbidden` (403), `api_invalid_request` (400), `api_not_found` (404).
+API codes: `api_unauthorized` (401), `api_rate_limited` (429), `api_forbidden` (403), `api_invalid_request` (400), `api_preview_get_only` (400), `api_not_found` (404).
 
 ## REST API and MCP
 

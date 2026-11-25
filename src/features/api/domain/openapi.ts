@@ -65,9 +65,9 @@ export const openApiDocument = {
     },
     "/projects/{owner}/{repo}/preview": {
       post: {
-        summary: "Dry run of a source or widget, without touching the cache",
+        summary: "Dry run of a GET source or widget, without touching the cache",
         description:
-          "Needs a maintainer or admin of the repository. Goes through the instance's allowed hosts and the project's secret host binding, like a real fetch.",
+          "Needs a maintainer or admin of the repository. Only GET sources are fetched (`api_preview_get_only` otherwise). Goes through the instance's allowed hosts and the project's secret host binding, like a real fetch.",
         parameters: params("owner", "repo"),
         requestBody: {
           required: true,
