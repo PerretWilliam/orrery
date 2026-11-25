@@ -10,7 +10,8 @@ import { secretIssue, type SecretIssue } from "./errors";
 export type SecretLookup = (name: string) => { value: string; boundHosts: readonly string[] } | undefined;
 export type RequestTemplate = { url: string; headers?: Record<string, string>; body?: unknown };
 export type ResolvedRequest = { url: string; headers: Record<string, string> };
-export type ResolveResult = { ok: true; request: ResolvedRequest } | { ok: false; issues: SecretIssue[] };
+/** `used` are the values that went into the request, and `inQuery` whether any of them travels in its URL. */
+export type ResolveResult = { ok: true; request: ResolvedRequest; used: string[]; inQuery: boolean } | { ok: false; issues: SecretIssue[] };
 
 const REFERENCE = /\$\{([^}]*)\}/g;
 /** Splits `text` at the first `mark`: what comes before, and the rest starting with the mark (empty when absent). */
@@ -75,6 +76,8 @@ export function resolveSecrets(template: RequestTemplate, lookup: SecretLookup):
     text.replace(REFERENCE, (_match, name: string) => encode(found.get(name) as string));
   return {
     ok: true,
+    used: [...found.values()],
+    inQuery: namesIn(query).length > 0,
     request: {
       url: base + fill(query, encodeURIComponent) + fragment,
       headers: Object.fromEntries(headers.map(([name, value]) => [name, fill(value, (v) => v)])),

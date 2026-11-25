@@ -9,6 +9,7 @@ npm ci                     # install
 npm run dev                # dev server
 npm run ci:local           # typecheck + lint + coverage + build + bundle budget (run before every PR)
 npm run test               # unit/component tests (Vitest)
+npm run test:security      # one negative test per threat of docs/scope.md (tests/security), also part of coverage
 npm run test:integration   # Testcontainers + MSW, needs Docker
 npm run test:e2e           # Playwright on the production build (npm run build first)
 npm run mutation           # Stryker, min 90% on sensitive modules

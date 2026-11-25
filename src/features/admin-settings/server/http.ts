@@ -1,5 +1,6 @@
 import { authenticatedMutation } from "@/features/auth/server/route-guard";
 import { currentViewer } from "@/features/auth/server/runtime";
+import { readForm } from "@/lib/body";
 import { redirectTo } from "@/features/setup/server/http";
 import { parseAction } from "../domain/admin";
 import { getAdminSettings } from "./runtime";
@@ -11,7 +12,7 @@ export async function adminAction(request: Request): Promise<Response> {
   const guarded = await authenticatedMutation(request);
   if ("response" in guarded) return guarded.response;
   const viewer = await currentViewer(request.headers);
-  const form = await request.formData().catch(() => null);
+  const form = viewer ? await readForm(request) : null; // nothing is read for a stranger
   if (!viewer || !form) return new Response(null, { status: viewer ? 400 : 401 });
   const action = parseAction((name) => (typeof form.get(name) === "string" ? (form.get(name) as string) : ""));
   const result = action ? await getAdminSettings().apply(viewer, action) : ({ ok: false, reason: "invalid", code: "admin_invalid_entry" } as const);

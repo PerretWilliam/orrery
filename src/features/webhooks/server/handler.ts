@@ -4,7 +4,7 @@ import { parseDeliveryHeaders } from "../domain/delivery";
 import { WEBHOOK_STATUS, webhookIssue, type WebhookIssue } from "../domain/errors";
 import { defaultBranchPush, invalidationScopes, isHandledEvent, PUSH_EVENT, REPOSITORY_SET_EVENTS } from "../domain/invalidation";
 import { verifySignature } from "../domain/signature";
-import { readCapped } from "./body";
+import { readCapped } from "@/lib/body";
 
 export type WebhookDeps = {
   /** The App's webhook secret in clear, or `null` before the first-run setup. */

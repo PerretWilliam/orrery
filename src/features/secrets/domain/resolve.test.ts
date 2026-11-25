@@ -17,7 +17,7 @@ describe("resolveSecrets", () => {
   it("returns the request unchanged when there is no reference, without touching the store", () => {
     const spy = vi.fn(lookup);
     const result = resolveSecrets({ url: `${URL_OK}?a=1#top`, headers: { Accept: "application/json" }, body: { q: "{ x }" } }, spy);
-    expect(result).toEqual({ ok: true, request: { url: `${URL_OK}?a=1#top`, headers: { Accept: "application/json" } } });
+    expect(result).toEqual({ ok: true, used: [], inQuery: false, request: { url: `${URL_OK}?a=1#top`, headers: { Accept: "application/json" } } });
     expect(spy).not.toHaveBeenCalled();
   });
   it("fills a header and the query string", () => {
@@ -27,6 +27,8 @@ describe("resolveSecrets", () => {
     );
     expect(result).toEqual({
       ok: true,
+      used: ["tok-123"],
+      inQuery: true,
       request: { url: `${URL_OK}?key=tok-123&x=1`, headers: { Authorization: "Bearer tok-123", "X-Two": "tok-123-tok-123" } },
     });
   });
@@ -123,6 +125,10 @@ describe("resolveSecrets", () => {
   it("leaves `${` text without a closing brace alone", () => {
     const result = resolveSecrets({ url: URL_OK, headers: { A: "cost is ${5" } }, lookup);
     expect(result).toMatchObject({ ok: true, request: { headers: { A: "cost is ${5" } } });
+  });
+  it("says a header secret does not travel in the URL, and a reference in the query does", () => {
+    expect(resolveSecrets({ url: `${URL_OK}?x=1`, headers: { A: "${GAME_TOKEN}" } }, lookup)).toMatchObject({ used: ["tok-123"], inQuery: false });
+    expect(resolveSecrets({ url: `${URL_OK}?k=\${GAME_TOKEN}` }, lookup)).toMatchObject({ used: ["tok-123"], inQuery: true });
   });
   it("accepts a secret whose bound-host list contains several hosts", () => {
     const multi: SecretLookup = () => ({ value: "v", boundHosts: ["a.example.com", "api.example.com"] });

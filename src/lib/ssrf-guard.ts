@@ -23,7 +23,8 @@ export type SsrfErrorCode =
   | "ssrf_host_not_allowed"
   | "ssrf_dns_failed"
   | "ssrf_too_many_redirects"
-  | "ssrf_bad_redirect";
+  | "ssrf_bad_redirect"
+  | "ssrf_redirect_blocked";
 
 const MESSAGES: Record<SsrfErrorCode, string> = {
   ssrf_invalid_url: "The source URL is not a valid absolute URL",
@@ -37,6 +38,8 @@ const MESSAGES: Record<SsrfErrorCode, string> = {
   ssrf_dns_failed: "The source host name could not be resolved",
   ssrf_too_many_redirects: "The source redirected more than 5 times",
   ssrf_bad_redirect: "The source sent an invalid redirect",
+  ssrf_redirect_blocked:
+    "The source redirected a request with a secret in its query to another host or to plain http",
 };
 
 const FIXES: Record<SsrfErrorCode, string> = {
@@ -55,6 +58,8 @@ const FIXES: Record<SsrfErrorCode, string> = {
     "Point the source at its final URL instead of a chain of redirects.",
   ssrf_bad_redirect:
     "Fix the Location header of the source, or point the source at its final URL.",
+  ssrf_redirect_blocked:
+    "Point the source at its final URL, or send the secret in a header instead of the query.",
 };
 
 export class SsrfError extends Error {
@@ -87,11 +92,15 @@ const PRIVATE_V4: ReadonlyArray<readonly [string, number]> = [
 ];
 const PRIVATE_V6: ReadonlyArray<readonly [string, number]> = [
   ["::", 96], // unspecified, loopback, IPv4-compatible
+  ["::ffff:0:0:0", 96], // IPv4-translated (SIIT)
   ["64:ff9b::", 96], // NAT64
+  ["64:ff9b:1::", 48], // local-use NAT64
   ["100::", 64], // discard
   ["2001::", 32], // Teredo
   ["2001:db8::", 32],
   ["2002::", 16], // 6to4
+  ["3fff::", 20], // documentation
+  ["5f00::", 16], // segment routing
   ["fc00::", 7],
   ["fe80::", 10],
   ["fec0::", 10],
@@ -297,6 +306,8 @@ export type FetchInit = {
   headers?: Record<string, string>;
   body?: string;
   signal?: AbortSignal;
+  /** Refuse any redirect that leaves the host or drops from https: for a request whose URL carries a secret. */
+  stayOnHost?: boolean;
 };
 /** Performs one request to `request.address`, without following redirects and without a new DNS lookup. */
 export type Send = (request: SsrfRequest) => Promise<Response>;
@@ -344,6 +355,13 @@ export async function guardedFetch(
     } catch {
       throw new SsrfError("ssrf_bad_redirect");
     }
+    // A server that echoes the query into `Location` (an open redirect) would carry the secret with it.
+    if (
+      init.stayOnHost &&
+      (next.hostname !== target.url.hostname ||
+        (target.url.protocol === "https:" && next.protocol !== "https:"))
+    )
+      throw new SsrfError("ssrf_redirect_blocked");
     const toGet =
       (response.status === 303 && method !== "HEAD") ||
       ((response.status === 301 || response.status === 302) &&

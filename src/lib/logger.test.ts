@@ -1,18 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { log, redact } from "./logger";
+import { log } from "./logger";
 
 afterEach(() => vi.restoreAllMocks());
-
-describe("redact", () => {
-  it("hides sensitive keys and keeps the rest", () => {
-    expect(redact({ clientSecret: "x", Authorization: "y", apiKey: "z", repo: "a/b" })).toEqual({
-      clientSecret: "[redacted]",
-      Authorization: "[redacted]",
-      apiKey: "[redacted]",
-      repo: "a/b",
-    });
-  });
-});
 
 describe("log", () => {
   it("writes one JSON line to stdout", () => {
@@ -22,6 +11,15 @@ describe("log", () => {
     expect(line).toMatchObject({ level: "info", msg: "hello", n: 1, token: "[redacted]" });
     expect(new Date(line.time).toString()).not.toBe("Invalid Date");
     expect(String(out.mock.calls[0][0]).endsWith("\n")).toBe(true);
+  });
+  it("hides every sensitive key, however deep, and keeps the rest", () => {
+    const out = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    log("info", "x", { clientSecret: "x", apiKey: "z", request: { headers: [{ Authorization: "y", Cookie: "c" }], repo: "a/b" } });
+    expect(JSON.parse(String(out.mock.calls[0][0]))).toMatchObject({
+      clientSecret: "[redacted]",
+      apiKey: "[redacted]",
+      request: { headers: [{ Authorization: "[redacted]", Cookie: "[redacted]" }], repo: "a/b" },
+    });
   });
   it("sends errors to stderr and defaults to no extra fields", () => {
     const err = vi.spyOn(process.stderr, "write").mockReturnValue(true);

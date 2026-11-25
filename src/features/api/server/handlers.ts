@@ -4,6 +4,7 @@ import type { WidgetData } from "@/features/widgets/server/widget-data";
 import type { Widget, WidgetProject } from "@/features/widgets/domain/types";
 import { parseConfig } from "@/features/config/domain/parse-config";
 import { LIMITS } from "@/features/config/domain/limits";
+import { readCapped } from "@/lib/body";
 import type {
   ProxyRequest,
   ProxyResult,
@@ -69,11 +70,11 @@ type PreviewBody = {
 };
 /** The JSON body of a preview, or `null` when it is too big, not JSON, or not shaped as documented. */
 async function readBody(request: Request): Promise<PreviewBody | null> {
-  const raw = await request.text();
-  if (raw.length > 2 * LIMITS.maxBytes) return null;
+  const bytes = await readCapped(request, 2 * LIMITS.maxBytes);
+  if (!bytes) return null;
   let body: Record<string, unknown>;
   try {
-    body = JSON.parse(raw);
+    body = JSON.parse(new TextDecoder().decode(bytes));
   } catch {
     return null;
   }

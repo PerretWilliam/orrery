@@ -3,6 +3,7 @@ import {
   resolveSecrets,
   type SecretLookup,
 } from "@/features/secrets/domain/resolve";
+import { redactSecrets } from "@/features/secrets/domain/redact";
 import { log } from "@/lib/logger";
 import { SsrfError, type SsrfPolicy } from "@/lib/ssrf-guard";
 import { SourceError } from "./source-error";
@@ -74,7 +75,12 @@ export type ProxyDeps = {
   /** `fetchSource` bound to the real DNS and transport. */
   fetch: (
     url: string,
-    init: { method: string; headers: Record<string, string>; body?: string },
+    init: {
+      method: string;
+      headers: Record<string, string>;
+      body?: string;
+      stayOnHost?: boolean;
+    },
     policy: SsrfPolicy,
   ) => Promise<{ data: unknown }>;
   /** Admin hosts, and the project's own list: read again for every request, so a change applies at once. */
@@ -172,6 +178,7 @@ export function createSourceProxy({
         headers,
         body:
           source.body === undefined ? undefined : JSON.stringify(source.body),
+        stayOnHost: resolved.inQuery,
       },
       policy,
     );
@@ -179,7 +186,7 @@ export function createSourceProxy({
     return {
       ok: true,
       state: "miss",
-      data,
+      data: redactSecrets(data, resolved.used),
       fetchedAt: new Date(fetchedAt),
       expiresAt: new Date(fetchedAt + source.ttlSeconds * 1000),
     };
