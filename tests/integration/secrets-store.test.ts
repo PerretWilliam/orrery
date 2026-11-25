@@ -23,6 +23,7 @@ afterAll(async () => {
 });
 beforeEach(async () => {
   await ctx.db.execute(sql`truncate github_installations, "user" cascade`);
+  await ctx.db.insert(s.user).values({ id: "u1", name: "Octo", email: "o@x.test", emailVerified: true, createdAt: new Date(), updatedAt: new Date() });
   await ctx.db.insert(s.githubInstallations).values({ id: 1, accountLogin: "acme", accountType: "Organization" });
   [{ id: repoId }] = await ctx.db
     .insert(s.repositories)
@@ -30,7 +31,7 @@ beforeEach(async () => {
     .returning({ id: s.repositories.id });
 });
 
-const entry = (over = {}) => ({ repositoryId: repoId, name: "A_KEY", ciphertext: "v1.k.iv.data", keyId: "k", boundHosts: ["a.com"], userId: "nobody", ...over });
+const entry = (over = {}) => ({ repositoryId: repoId, name: "A_KEY", ciphertext: "v1.k.iv.data", keyId: "k", boundHosts: ["a.com"], userId: "u1", ...over });
 
 describe("secrets store", () => {
   it("finds a repository without regard to case, and knows an unknown one", async () => {
@@ -38,8 +39,7 @@ describe("secrets store", () => {
     expect(await store.repositoryId({ owner: "acme", name: "other" })).toBeNull();
   });
   it("creates a secret, replaces its value and hosts, and lists names and hosts only", async () => {
-    await ctx.db.insert(s.user).values({ id: "u1", name: "Octo", email: "o@x.test", emailVerified: true, createdAt: new Date(), updatedAt: new Date() });
-    await store.save(entry({ userId: "u1" }), new Date(1000));
+    await store.save(entry(), new Date(1000));
     await store.save(entry({ ciphertext: "v1.k.iv.new", boundHosts: ["b.com", "c.com"] }), new Date(2000));
     await store.save(entry({ name: "B_KEY" }), new Date(3000));
     const listed = await store.list(repoId);
