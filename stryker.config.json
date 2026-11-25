@@ -9,6 +9,7 @@
     "src/features/config/domain/**/*.ts",
     "src/features/access/domain/**/*.ts",
     "src/features/secrets/domain/**/*.ts",
+    "src/features/secrets/server/service.ts",
     "src/features/data-proxy/domain/**/*.ts",
     "src/features/setup/domain/**/*.ts",
     "src/features/setup/server/service.ts",

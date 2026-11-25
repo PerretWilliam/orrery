@@ -41,5 +41,21 @@
     "issueFix": "Fix",
     "noWidgets": "This page has no widgets yet.",
     "widgetSoon": "Not drawn yet"
+  },
+  "Secrets": {
+    "title": "Secrets of {project}",
+    "intro": "Secrets are write-only: once saved, a value is never shown again. Each one is only ever sent to the hosts it is bound to.",
+    "saved": "Saved.",
+    "errorTitle": "The secret could not be saved",
+    "listTitle": "Existing secrets",
+    "empty": "No secrets yet.",
+    "hosts": "Bound hosts",
+    "delete": "Delete",
+    "formTitle": "Add or replace a secret",
+    "formHelp": "Saving a name that already exists replaces its value and hosts.",
+    "name": "Name",
+    "value": "Value",
+    "hostsLabel": "Hosts (separated by spaces or commas)",
+    "save": "Save"
   }
 }
