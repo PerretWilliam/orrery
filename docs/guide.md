@@ -20,7 +20,7 @@ cp .env.example .env   # set POSTGRES_PASSWORD and ORRERY_ENCRYPTION_KEYS, see b
 docker compose up -d
 ```
 
-Pin a version in `docker-compose.yml` (for example `:0.2.0`) instead of `latest`, and put a TLS reverse proxy in front of port 3000.
+Pin a version in `docker-compose.yml` (for example `:1.0.0`) instead of `latest`, and put a TLS reverse proxy in front of port 3000.
 
 On start, Orrery applies its database migrations, then prints a line `Orrery is not set up yet` with a **setup token** (unless you set `ORRERY_SETUP_TOKEN`); read it with `docker compose logs orrery`. Open `/setup`, enter the token, and follow the wizard: it creates the GitHub App through a manifest and makes you the instance admin. Then sign in with GitHub and install the GitHub App on the accounts or repositories you want to see.
 
