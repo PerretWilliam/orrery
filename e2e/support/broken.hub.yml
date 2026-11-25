@@ -1,0 +1,10 @@
+# Invalid on purpose: the widget names a source that is not declared. Served by the fake GitHub as acme/zeta, and read
+# by the CLI, so every surface is shown the same file (e2e/instance.spec.ts).
+version: 1
+project:
+  name: Zeta
+pages:
+  - id: main
+    title: Main
+    widgets:
+      - { type: kpi, source: nowhere, label: Users, path: total }

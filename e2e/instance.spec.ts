@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { expect, test, type APIRequestContext, type Browser } from "@playwright/test";
 import {
   finishSetup,
   INSTANCE_URL,
@@ -37,13 +39,10 @@ test("a new instance sends the first visitor to the setup, which asks for the to
 test.describe("once the instance is set up", () => {
   let cookies: Map<string, string>;
   test.beforeAll(async () => {
-    cookies = await finishSetup(["alice", "mallory"]);
+    cookies = await finishSetup(["alice", "bob", "mallory"]);
   });
 
-  const signedIn = async (
-    browser: import("@playwright/test").Browser,
-    login: string,
-  ) => {
+  const signedIn = async (browser: Browser, login: string) => {
     const context = await browser.newContext({ baseURL: INSTANCE_URL });
     await context.addCookies([
       {
@@ -164,12 +163,18 @@ test.describe("once the instance is set up", () => {
     test.setTimeout(120_000);
     const { context, page } = await signedIn(browser, "alice");
     const titles = Array.from({ length: 10 }, (_, i) => `P${i + 1}`);
+    // Milliseconds from the start of the navigation to the first frame with all ten visible, read inside the page: an
+    // assertion retried from here would only see it at its own steps (100, 350, 850 ms).
     const render = async () => {
-      const started = Date.now();
       await page.goto("/p/acme/web/perf", { waitUntil: "commit" });
-      for (const title of titles)
-        await expect(page.getByText(title, { exact: true })).toBeVisible();
-      return Date.now() - started;
+      const shown = await page.waitForFunction(
+        (wanted) => {
+          const leaves = [...document.querySelectorAll("body *")].filter((el) => el.childElementCount === 0 && el.checkVisibility());
+          return wanted.every((title) => leaves.some((el) => el.textContent === title)) ? performance.now() : false;
+        },
+        titles,
+      );
+      return Math.round((await shown.jsonValue()) as number);
     };
     await render(); // the first visit fills the server cache and the browser's
     const samples: number[] = [];
@@ -180,6 +185,117 @@ test.describe("once the instance is set up", () => {
       `[perf] ten widgets from cache: p50 ${samples[10]} ms, p95 ${p95} ms`,
     );
     expect(p95).toBeLessThan(1000);
+    await context.close();
+  });
+
+  // The V1 "Done when" journeys (docs/scope.md) that need the whole instance.
+  test("a source that is down fails in its own widget and leaves the others", async ({
+    browser,
+  }) => {
+    const { context, page } = await signedIn(browser, "alice");
+    await page.goto("/p/acme/web/down");
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Gone" }),
+    ).toContainText("ssrf_dns_failed");
+    await expect(page.getByRole("link", { name: "v0.1.0 Release 1" })).toBeVisible();
+    await context.close();
+  });
+
+  // A token made the way a user makes one: through the account page, shown once.
+  const createToken = async (browser: Browser, login: string) => {
+    const { context, page } = await signedIn(browser, login);
+    await page.goto("/account/tokens");
+    await page.getByLabel("Label").fill("agent");
+    await page.getByRole("button", { name: "Create" }).click();
+    const token = await page.locator("code", { hasText: /^orr_/ }).innerText();
+    await context.close();
+    return token;
+  };
+  const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
+  const rpc = async (request: APIRequestContext, token: string, method: string, params?: object) => {
+    const response = await request.post("/api/mcp", {
+      headers: bearer(token),
+      data: { jsonrpc: "2.0", id: 1, method, params },
+    });
+    expect(response.status()).toBe(200);
+    return (await response.json()).result;
+  };
+  const tool = async (request: APIRequestContext, token: string, name: string, args: object = {}) => {
+    const result = await rpc(request, token, "tools/call", { name, arguments: args });
+    return { isError: result.isError, body: JSON.parse(result.content[0].text) };
+  };
+
+  test("an agent with a read-only token lists the projects and reads a widget through MCP", async ({
+    browser,
+    request,
+  }) => {
+    const alice = await createToken(browser, "alice");
+    const { tools } = await rpc(request, alice, "tools/list");
+    expect(tools.map((t: { name: string }) => t.name)).toEqual([
+      "list_projects",
+      "get_project",
+      "read_widget",
+      "explain_error",
+      "validate_config",
+    ]);
+
+    const listed = await tool(request, alice, "list_projects");
+    expect(listed.body.projects.map((p: { name: string }) => p.name).sort()).toEqual(["web", "zeta"]);
+
+    const widget = { owner: "acme", repo: "web", page: "perf", index: 0 };
+    const read = await tool(request, alice, "read_widget", widget);
+    expect(read.isError).toBe(false);
+    expect(read.body.trust).toBe("untrusted");
+    expect(JSON.stringify(read.body.data)).toContain("Issue 1");
+
+    // A member of the organization with no access to the repository gets nothing, and cannot tell the project exists.
+    const bob = await createToken(browser, "bob");
+    expect((await tool(request, bob, "list_projects")).body.projects).toEqual([]);
+    const refused = await tool(request, bob, "read_widget", widget);
+    expect(refused.isError).toBe(true);
+    expect(JSON.stringify(refused.body)).toContain("api_not_found");
+
+    // Somebody outside the organization may not use the hub at all, whatever token they hold.
+    const mallory = await createToken(browser, "mallory");
+    const outsider = await request.post("/api/mcp", {
+      headers: bearer(mallory),
+      data: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+    });
+    expect(outsider.status()).toBe(401);
+  });
+
+  test("an invalid .hub.yml gives the same structured error in the CLI, the API, MCP and the UI", async ({
+    browser,
+    request,
+  }) => {
+    const file = "e2e/support/broken.hub.yml";
+    expect(spawnSync(process.execPath, ["scripts/build-cli.mjs"]).status).toBe(0);
+    const cli = spawnSync(process.execPath, ["dist/cli/orrery.cjs", "validate", "--json", file], { encoding: "utf8" });
+    expect(cli.status).toBe(1);
+    const { issues } = JSON.parse(cli.stdout);
+    expect(issues).toEqual([
+      {
+        code: "config_unknown_source",
+        path: expect.stringContaining("source"),
+        line: expect.any(Number),
+        message: expect.any(String),
+        fix: expect.any(String),
+      },
+    ]);
+
+    const token = await createToken(browser, "alice");
+    const api = await request.get("/api/v1/projects/acme/zeta", { headers: bearer(token) });
+    expect((await api.json()).issues).toEqual(issues);
+
+    const yaml = readFileSync(file, "utf8");
+    expect((await tool(request, token, "validate_config", { yaml })).body.issues).toEqual(issues);
+    expect((await tool(request, token, "get_project", { owner: "acme", repo: "zeta" })).body.issues).toEqual(issues);
+
+    const { context, page } = await signedIn(browser, "alice");
+    await page.goto("/p/acme/zeta");
+    const [{ code, path, line, message, fix }] = issues;
+    const shown = page.getByRole("listitem").filter({ hasText: code });
+    for (const part of [message, `${path}:${line}`, fix]) await expect(shown).toContainText(part);
     await context.close();
   });
 
