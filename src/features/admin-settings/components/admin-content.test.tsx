@@ -13,7 +13,7 @@ class NotFound extends Error {}
 vi.mock("@/features/auth/server/runtime", () => ({ currentViewer: (h: Headers) => currentViewer(h) }));
 vi.mock("@/features/repos/server/runtime", () => ({ getProjects: () => ({ visibleTo }) }));
 vi.mock("@/features/audit/server/runtime", () => ({ getAudit: () => ({ list }) }));
-vi.mock("../server/runtime", () => ({ getAdminSettings: () => ({ overview }) }));
+vi.mock("../server/runtime", () => ({ getAdminSettings: () => ({ overview, isAdmin: async () => true }) }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ host: "hub.test" }) }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
@@ -25,6 +25,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { AdminContent } from "./admin-content";
+
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
 
 const run = (query: { saved?: string; error?: string } = {}) => AdminContent({ searchParams: Promise.resolve(query) });
 const outcome = async () => {

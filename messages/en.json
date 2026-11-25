@@ -23,19 +23,24 @@
     "title": "Sign in to Orrery",
     "intro": "Orrery shows what GitHub lets you see. Sign in with the GitHub account you use for your repositories.",
     "submit": "Sign in with GitHub",
-    "errorTitle": "Sign-in problem"
+    "errorTitle": "Sign-in problem",
+    "headline": "Code state next to product health.",
+    "points": {
+      "code": "Issues, pull requests, CI runs and releases",
+      "metrics": "Your own numbers, from endpoints you expose",
+      "access": "You only see what GitHub lets you see"
+    },
+    "tagline": "Self-hosted. One dashboard per repository, described by .hub.yml."
   },
   "Shell": {
     "brand": "Orrery",
     "projects": "Projects",
     "signOut": "Sign out",
-    "themeSwitch": "Theme: {theme}. Switch theme.",
     "theme": {
       "system": "System",
       "light": "Light",
       "dark": "Dark"
     },
-    "pages": "Pages",
     "emptyTitle": "No projects yet",
     "emptyBody": "A repository shows up here once it has a .hub.yml file on its default branch and the GitHub App can read it.",
     "private": "Private",
@@ -47,7 +52,19 @@
     "issuePath": "Path",
     "issueFix": "Fix",
     "noWidgets": "This page has no widgets yet.",
-    "tokens": "Agent tokens"
+    "github": "GitHub",
+    "public": "Public",
+    "themeLabel": "Theme",
+    "sidebarTitle": "Sidebar",
+    "sidebarBody": "Projects and your account.",
+    "sidebarToggle": "Toggle sidebar",
+    "overview": "Overview",
+    "lists": {
+      "issues": "Issues",
+      "pull_requests": "Pull requests",
+      "workflow_runs": "Workflow runs",
+      "releases": "Releases"
+    }
   },
   "Secrets": {
     "title": "Secrets of {project}",
@@ -104,6 +121,12 @@
       "up": "Up",
       "degraded": "Degraded",
       "down": "Down"
+    },
+    "columns": {
+      "title": "Title",
+      "author": "Author",
+      "updated": "Updated",
+      "state": "State"
     }
   },
   "Admin": {
@@ -113,7 +136,7 @@
     "add": "Add",
     "remove": "Remove",
     "signInTitle": "Who may sign in",
-    "signInIntro": "Level 1 of the access policy. Entries are org:<login>, team:<org>/<slug> or user:<login>. GitHub's own permissions still apply: the hub only narrows.",
+    "signInIntro": "Level 1 of the access policy. Entries are org:'<'login>, team:'<'org>/'<'slug> or user:'<'login>. GitHub's own permissions still apply: the hub only narrows.",
     "signInEmpty": "The list is empty: nobody can sign in except admins.",
     "signInLabel": "Entry",
     "rulesTitle": "Project rules",
@@ -161,5 +184,18 @@
     "name": "Label",
     "days": "Lifetime in days",
     "create": "Create"
+  },
+  "Settings": {
+    "title": "Settings",
+    "sections": "Settings sections",
+    "appearance": "Appearance",
+    "tokens": "Agent tokens",
+    "admin": "Administration",
+    "themeTitle": "Theme",
+    "themeBody": "Remembered in this browser only. System follows your device."
+  },
+  "Toasts": {
+    "region": "Notifications",
+    "dismiss": "Dismiss notification"
   }
 }

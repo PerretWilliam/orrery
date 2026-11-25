@@ -7,8 +7,8 @@ import type { WidgetProps } from "../../domain/types";
 import { WidgetEmpty } from "../widget-states";
 
 const LOOK: Record<Health, { icon: typeof CircleCheck; tone: string }> = {
-  up: { icon: CircleCheck, tone: "text-emerald-600 dark:text-emerald-400" },
-  degraded: { icon: TriangleAlert, tone: "text-amber-600 dark:text-amber-400" },
+  up: { icon: CircleCheck, tone: "text-success" },
+  degraded: { icon: TriangleAlert, tone: "text-warning" },
   down: { icon: CircleX, tone: "text-destructive" },
 };
 

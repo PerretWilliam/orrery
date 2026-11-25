@@ -45,6 +45,8 @@ export function createAdminSettings({ store, keyring, audit }: AdminDeps) {
   };
 
   return {
+    isAdmin: allowed,
+
     /** `null` when the user is not an admin. */
     async overview(actor: Actor) {
       if (!(await allowed(actor))) return null;

@@ -1,6 +1,6 @@
 /** What sign-in and sessions need from the database. The Drizzle implementation is tested against Postgres. */
 
-export type UserState = { login: string | null; suspendedAt: Date | null };
+export type UserState = { login: string | null; suspendedAt: Date | null; image?: string | null };
 export type GithubAppCredentials = { clientId: string; clientSecretCiphertext: string };
 
 export type AuthStore = {

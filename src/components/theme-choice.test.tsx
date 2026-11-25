@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import messages from "../../messages/en.json";
-import { ThemeToggle } from "./theme-toggle";
+import { ThemeChoice, ThemeSync } from "./theme-choice";
 
 let listeners: ((e: { matches: boolean }) => void)[] = [];
 let dark = false;
@@ -23,32 +23,38 @@ afterEach(() => {
   document.documentElement.className = "";
   vi.unstubAllGlobals();
 });
-const show = () => render(<NextIntlClientProvider locale="en" messages={messages}><ThemeToggle /></NextIntlClientProvider>);
+const ui = (
+  <NextIntlClientProvider locale="en" messages={messages}>
+    <ThemeChoice />
+  </NextIntlClientProvider>
+);
+const item = (name: string) => screen.getByRole("button", { name });
+const selected = (name: string) => expect(item(name)).toHaveAttribute("aria-pressed", "true");
 
-describe("ThemeToggle", () => {
-  it("starts on the stored theme, and cycles system, light, dark, remembering and applying each", () => {
+describe("ThemeChoice", () => {
+  it("starts on the stored theme, then remembers and applies the chosen one", () => {
     localStorage.setItem("orrery-theme", "light");
-    show();
-    expect(screen.getByRole("button", { name: "Theme: Light. Switch theme." })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button"));
+    render(ui);
+    selected("Light");
+    fireEvent.click(item("Dark"));
     expect(localStorage.getItem("orrery-theme")).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(screen.getByRole("button", { name: "Theme: Dark. Switch theme." })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button"));
+    selected("Dark");
+    fireEvent.click(item("System"));
     expect(localStorage.getItem("orrery-theme")).toBe("system");
     expect(document.documentElement.classList.contains("dark")).toBe(false);
-    expect(screen.getByRole("button", { name: "Theme: System. Switch theme." })).toBeInTheDocument();
+    selected("System");
   });
-  it("follows the system live while on system", () => {
-    show();
-    dark = true;
-    act(() => listeners.forEach((l) => l({ matches: true })));
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
+  it("keeps a theme selected when the selected one is pressed again", () => {
+    render(ui);
+    fireEvent.click(item("System"));
+    selected("System");
   });
   it("renders as system on the server, whatever this browser stored", () => {
     localStorage.setItem("orrery-theme", "dark");
-    const html = renderToString(<NextIntlClientProvider locale="en" messages={messages}><ThemeToggle /></NextIntlClientProvider>);
-    expect(html).toContain("Theme: System. Switch theme.");
+    const host = document.createElement("div");
+    host.innerHTML = renderToString(ui);
+    expect(host.querySelector('[aria-pressed="true"]')).toHaveTextContent("System");
   });
   it("still works when storage is blocked", () => {
     const get = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
@@ -57,11 +63,24 @@ describe("ThemeToggle", () => {
     const set = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("blocked");
     });
-    show();
-    expect(screen.getByRole("button", { name: "Theme: System. Switch theme." })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button"));
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    render(ui);
+    selected("System");
+    fireEvent.click(item("Dark"));
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    selected("Dark");
     get.mockRestore();
     set.mockRestore();
+  });
+});
+
+describe("ThemeSync", () => {
+  it("follows the system live while on system, and renders nothing", () => {
+    const { container, unmount } = render(<ThemeSync />);
+    expect(container).toBeEmptyDOMElement();
+    dark = true;
+    act(() => listeners.forEach((l) => l({ matches: true })));
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    unmount();
+    expect(listeners).toHaveLength(0);
   });
 });

@@ -30,6 +30,7 @@
     "@tanstack/react-query": "^5.108.3",
     "@tanstack/react-table": "^9.3.1",
     "@tanstack/react-virtual": "^3.14.28",
+    "@yusufceng1z/ding-react": "0.0.9",
     "better-auth": "1.7.27",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

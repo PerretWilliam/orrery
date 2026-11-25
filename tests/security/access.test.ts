@@ -80,6 +80,7 @@ function hub({ githubStatus, limit }: { githubStatus?: number; limit?: number } 
   const projects = createProjects({
     store: { listConfigured: async () => rows, view: async (repo) => rows.find((r) => r.owner === repo.owner && r.name === repo.name) ?? null },
     canView: (repo, login) => policy.can(repo, login, "view"),
+    canManage: (repo, login) => policy.can(repo, login, "manage_hosts"),
   });
   const load = vi.fn(async (project: { name: string }) => ({ ok: true as const, data: `DATA of ${project.name}`, fetchedAt: null, stale: false }));
   const preview = vi.fn();

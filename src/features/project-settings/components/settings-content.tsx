@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { currentViewer } from "@/features/auth/server/runtime";
-import { AppShell } from "@/features/repos/components/app-shell";
 import { getProjects } from "@/features/repos/server/runtime";
 import { SETTINGS_ERRORS, type SettingsErrorCode } from "../domain/hosts";
 import { getProjectSettings } from "../server/runtime";
@@ -22,9 +21,5 @@ export async function SettingsContent({ params, searchParams }: { params: Params
   const overview = project && (await getProjectSettings().overview(project, viewer));
   if (!project || !overview) notFound();
 
-  return (
-    <AppShell projects={await projects.visibleTo(viewer.login)} current={project}>
-      <SettingsView project={project} overview={overview} saved={saved === "1"} error={error !== undefined && Object.hasOwn(SETTINGS_ERRORS, error) ? (error as SettingsErrorCode) : null} />
-    </AppShell>
-  );
+  return <SettingsView project={project} overview={overview} saved={saved === "1"} error={error !== undefined && Object.hasOwn(SETTINGS_ERRORS, error) ? (error as SettingsErrorCode) : null} />;
 }

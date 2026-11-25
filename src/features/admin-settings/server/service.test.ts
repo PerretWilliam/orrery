@@ -55,6 +55,7 @@ const everyAction: AdminAction[] = [
 describe("admin settings", () => {
   it("refuses every action and the overview to a user who is not an admin, touching nothing, with the lowercased login asked", async () => {
     const { admin, store, audit } = setup({ admin: false });
+    expect(await admin.isAdmin(actor)).toBe(false);
     expect(await admin.overview(actor)).toBeNull();
     for (const action of everyAction) expect(await admin.apply(actor, action)).toEqual({ ok: false, reason: "forbidden" });
     expect(store.isAdmin).toHaveBeenCalledWith("octo");

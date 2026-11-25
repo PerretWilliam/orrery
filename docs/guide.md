@@ -66,7 +66,7 @@ Test a restore now and then. The audit log is append-only in the database and is
 
 ## Who sees what
 
-People sign in with GitHub and see the repositories GitHub lets them access, narrowed by the policy the admin sets under Admin (sign-in allowlist, per-project rules). Public repositories are not visible to strangers. Maintainers and admins of a repository manage its secrets.
+People sign in with GitHub and see the repositories GitHub lets them access, narrowed by the policy the admin sets under Settings > Administration (sign-in allowlist, per-project rules). Public repositories are not visible to strangers. Maintainers and admins of a repository manage its secrets.
 
 ## Write a `.hub.yml`
 
@@ -83,6 +83,8 @@ pages:
       - { type: github.pull_requests, state: open }
       - { type: github.workflow_runs, branch: main }
 ```
+
+A page made only of GitHub lists (two or more) unfolds in the sidebar and shows one list at a time.
 
 Add a data source of your own (an internal API, a status endpoint) and show it:
 
@@ -115,7 +117,7 @@ Errors carry a code, the path of the problem and a suggested fix. The same error
 
 ## Agent tokens
 
-Under Account > Agent tokens you can create a token for scripts and AI agents. It has your access and no more, expires, and can be revoked. See [agents.md](agents.md) for the REST API and MCP server.
+Under Settings > Agent tokens you can create a token for scripts and AI agents. It has your access and no more, expires, and can be revoked. See [agents.md](agents.md) for the REST API and MCP server.
 
 ## When something goes wrong
 

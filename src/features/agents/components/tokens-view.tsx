@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { SavedToast } from "@/components/saved-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,7 @@ export function TokensView({ tokens, created, saved, error, now }: Props) {
   const t = useTranslations("Tokens");
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+      <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
       <p className="text-sm text-muted-foreground">{t("intro")}</p>
       {created ? (
         <Alert>
@@ -27,11 +28,7 @@ export function TokensView({ tokens, created, saved, error, now }: Props) {
           </AlertDescription>
         </Alert>
       ) : null}
-      {saved ? (
-        <Alert>
-          <AlertTitle>{t("saved")}</AlertTitle>
-        </Alert>
-      ) : null}
+      {saved ? <SavedToast message={t("saved")} /> : null}
       {error ? (
         <Alert variant="destructive">
           <AlertTitle>{t("errorTitle")}</AlertTitle>

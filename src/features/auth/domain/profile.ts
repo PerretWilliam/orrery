@@ -1,3 +1,6 @@
+/** The signed-in user as pages know them. */
+export type Viewer = { userId: string; login: string; image?: string | null };
+
 export type GithubProfile = { id: number; login: string; name?: string | null; avatar_url?: string | null };
 
 /**

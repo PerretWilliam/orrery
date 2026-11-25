@@ -25,6 +25,8 @@ vi.mock("next/navigation", () => ({
 
 import { SecretsContent } from "./secrets-content";
 
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
+
 const project = { owner: "acme", name: "web", isPrivate: false, archived: false, title: "Starfall", color: null, config: null, issues: [] };
 const run = (query: { saved?: string; error?: string } = {}) =>
   SecretsContent({ params: Promise.resolve({ owner: "acme", repo: "web" }), searchParams: Promise.resolve(query) });

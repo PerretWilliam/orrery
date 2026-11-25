@@ -7,13 +7,15 @@ import { ConfigV1 } from "@/features/config/domain/schema-v1";
 
 const currentViewer = vi.fn();
 const open = vi.fn();
-const visibleTo = vi.fn();
 class Redirected extends Error {}
 class NotFound extends Error {}
 vi.mock("@/features/auth/server/runtime", () => ({ currentViewer: (h: Headers) => currentViewer(h) }));
-const can = vi.fn();
-vi.mock("@/features/access/server/runtime", () => ({ getAccessPolicy: () => ({ can }) }));
-vi.mock("../server/runtime", () => ({ getProjects: () => ({ open, visibleTo }) }));
+vi.mock("../server/runtime", () => ({ getProjects: () => ({ open }) }));
+vi.mock("./project-view", () => ({
+  ProjectView: ({ project, page, list }: { project: { title: string }; page: { id: string } | null; list?: { type: string } }) => (
+    <p data-testid="view">{[project.title, page?.id, list?.type].filter(Boolean).join(" ")}</p>
+  ),
+}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ host: "hub.test" }) }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
@@ -32,6 +34,7 @@ const config = ConfigV1.parse({
   pages: [
     { id: "overview", title: "Overview", widgets: [] },
     { id: "ops", title: "Ops", widgets: [] },
+    { id: "activity", title: "Activity", widgets: [{ type: "github.issues" }, { type: "github.releases", title: "<img src=x>" }] },
   ],
 });
 const project = (over = {}) => ({ owner: "acme", name: "web", isPrivate: false, archived: false, title: "Starfall", color: null, config, issues: [], ...over });
@@ -54,8 +57,6 @@ const show = (ui: ReactElement) =>
 beforeEach(() => {
   currentViewer.mockResolvedValue({ userId: "u1", login: "octo" });
   open.mockResolvedValue(project());
-  visibleTo.mockResolvedValue([project()]);
-  can.mockResolvedValue(false);
 });
 afterEach(() => vi.clearAllMocks());
 
@@ -76,24 +77,30 @@ describe("ProjectContent", () => {
     open.mockResolvedValue(project({ config: null }));
     expect(await outcome(["overview"])).toBe("404");
   });
-  it("shows the first page by default, inside the shell", async () => {
+  const shown = () => screen.getByTestId("view").textContent;
+  const place = () => decodeURIComponent(document.cookie);
+  it("shows the first page by default, and remembers it", async () => {
     show((await ProjectContent({ params: params() })) as ReactElement);
-    expect(screen.getByRole("heading", { name: "Starfall" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
+    expect(shown()).toBe("Starfall overview");
+    expect(place()).toContain("orrery_last=/p/acme/web/overview");
   });
-  it("shows the page asked for, and the problems of a project that was never valid", async () => {
-    show((await ProjectContent({ params: params(["ops"]) })) as ReactElement);
-    expect(screen.getByRole("link", { name: "Ops" })).toHaveAttribute("aria-current", "page");
-    open.mockResolvedValue(project({ config: null, issues: [{ code: "config_syntax", path: "$", message: "bad", fix: "fix" }] }));
+  it("shows the page asked for, and a project that was never valid without one", async () => {
+    show((await ProjectContent({ params: params(["ops"]) })) as ReactElement).unmount();
+    open.mockResolvedValue(project({ config: null }));
     show((await ProjectContent({ params: params() })) as ReactElement);
-    expect(screen.getByText("Nothing can be shown until they are fixed.")).toBeInTheDocument();
+    expect(shown()).toBe("Starfall");
   });
-  it("links to the settings for a user who manages the project, and only for them", async () => {
-    show((await ProjectContent({ params: params() })) as ReactElement);
-    expect(screen.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
-    can.mockResolvedValue(true);
-    show((await ProjectContent({ params: params() })) as ReactElement);
-    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings/acme/web");
-    expect(can).toHaveBeenCalledWith(expect.objectContaining({ owner: "acme" }), "octo", "manage_hosts");
+  it("shows the first list of a page of lists by default, and the one asked for", async () => {
+    const view = show((await ProjectContent({ params: params(["activity"]) })) as ReactElement);
+    expect(shown()).toBe("Starfall activity github.issues");
+    expect(place()).toContain("orrery_last=/p/acme/web/activity/issues");
+    view.unmount();
+    show((await ProjectContent({ params: params(["activity", "releases"]) })) as ReactElement);
+    expect(shown()).toBe("Starfall activity github.releases");
+  });
+  it("is a 404 for an unknown list, a list under a page that has none, and a path deeper than a list", async () => {
+    expect(await outcome(["activity", "nope"])).toBe("404");
+    expect(await outcome(["ops", "issues"])).toBe("404");
+    expect(await outcome(["activity", "issues", "x"])).toBe("404");
   });
 });

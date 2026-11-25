@@ -10,8 +10,12 @@ const now = new Date("2026-01-01T12:00:00Z");
 
 describe("widget states", () => {
   it("loading is a busy card with an accessible name", () => {
-    show(<WidgetLoading />);
+    show(<WidgetLoading type="kpi" />);
     expect(screen.getByLabelText("Loading…")).toHaveAttribute("aria-busy", "true");
+  });
+  it.each([["kpi", "value"], ["status", "value"], ["line", "chart"], ["bar", "chart"], ["donut", "chart"], ["cohort", "chart"], ["table", "rows"], ["github.issues", "rows"], ["markdown", "text"]])("a loading %s looks like %s", (type, shape) => {
+    show(<WidgetLoading type={type} />);
+    expect(screen.getByLabelText("Loading…")).toHaveAttribute("data-shape", shape);
   });
   it("empty says so, with or without a title", () => {
     show(<WidgetEmpty title="Players" />);
@@ -25,12 +29,13 @@ describe("widget states", () => {
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.getByText("<b>Players</b>")).toBeInTheDocument();
     expect(screen.getByText("source_timeout")).toBeInTheDocument();
-    expect(screen.getByText(/Too slow\. Fix: Speed up/)).toBeInTheDocument();
+    expect(screen.getByText("Too slow")).toBeInTheDocument();
+    expect(screen.getByText("Speed up")).toHaveTextContent("Fix Speed up");
     expect(screen.getByText("secret_unknown")).toBeInTheDocument();
   });
   it("error without a title falls back to the generic heading", () => {
     show(<WidgetError errors={[]} />);
-    expect(screen.getAllByText("This widget could not load its data")).toHaveLength(2);
+    expect(screen.getByText("This widget could not load its data")).toBeInTheDocument();
   });
   it("crashed gives no detail, with or without a title", () => {
     show(<WidgetCrashed title="Players" />);

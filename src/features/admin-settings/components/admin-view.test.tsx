@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import messages from "../../../../messages/en.json";
 import { AdminView } from "./admin-view";
+
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
 
 const empty = { allowlist: [], hosts: [], admins: ["octo"], rules: [], key: null };
 const show = (props: Partial<Parameters<typeof AdminView>[0]> = {}) =>
@@ -17,6 +19,10 @@ describe("AdminView", () => {
     show();
     for (const text of [/nobody can sign in except admins/, /No rule: GitHub decides/, /private addresses are refused everywhere/, /encryption keys could not be read/, /Nothing recorded yet/]) expect(screen.getByText(text)).toBeInTheDocument();
     expect(screen.queryByText("Saved.")).not.toBeInTheDocument();
+  });
+  it("writes the form of a sign-in entry, angle brackets included", () => {
+    show();
+    expect(screen.getByText(/Entries are org:<login>, team:<org>\/<slug> or user:<login>\. GitHub's own/)).toBeInTheDocument();
   });
   it("lists every entry with a remove form carrying what the removal needs", () => {
     const { container } = show({

@@ -1,48 +1,47 @@
 import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { buttonVariants } from "@/components/ui/button-variants";
-import { cn } from "@/lib/utils";
+import { ThemeSync } from "@/components/theme-choice";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import type { Viewer } from "@/features/auth/domain/profile";
+import { settingsPath } from "@/features/project-settings/domain/hosts";
+import { listsOf } from "@/features/widgets/domain/lists";
 import { projectPath } from "../domain/project";
-import type { Project } from "../server/projects";
+import type { ListedProject } from "../server/projects";
+import { AppSidebar } from "./app-sidebar";
 
-/** Header with the project switcher, and the sign-out button, around a page. */
-export function AppShell({ projects, current, children }: { projects: readonly Project[]; current?: { owner: string; name: string }; children: React.ReactNode }) {
+type Props = { viewer: Viewer; projects: readonly ListedProject[]; children: React.ReactNode };
+
+/** The sidebar around a page. Only what the sidebar shows crosses to the browser, never a project's configuration. */
+export function AppShell({ viewer, projects, children }: Props) {
   const t = useTranslations("Shell");
+  const links = projects.map((project) => ({
+    href: projectPath(project),
+    title: project.title,
+    color: project.color,
+    isPrivate: project.isPrivate,
+    // A project whose config has never been valid still needs a way to its page, where the problems are shown.
+    pages: project.config?.pages.map((page) => ({
+      href: projectPath(project, page.id),
+      title: page.title,
+      lists: listsOf(page.widgets).map(({ id, kind, widget }) => ({ href: projectPath(project, page.id, id), title: ("title" in widget ? widget.title : undefined) ?? t(`lists.${kind}`) })),
+    })) ?? [{ href: projectPath(project), title: t("overview"), lists: [] }],
+    settingsHref: project.canManage ? settingsPath(project) : null,
+  }));
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-6 py-3">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          {t("brand")}
-        </Link>
-        <nav aria-label={t("projects")} className="flex flex-1 flex-wrap gap-1">
-          {projects.map((project) => {
-            const active = project.owner === current?.owner && project.name === current?.name;
-            return (
-              <Link
-                key={`${project.owner}/${project.name}`}
-                href={projectPath(project)}
-                aria-current={active ? "page" : undefined}
-                className={cn(buttonVariants({ variant: active ? "secondary" : "ghost", size: "sm" }))}
-              >
-                {project.color ? <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: project.color }} /> : null}
-                {project.title}
-              </Link>
-            );
-          })}
-        </nav>
-        <Link href="/account/tokens" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-          {t("tokens")}
-        </Link>
-        <ThemeToggle />
-        <form method="post" action="/auth/sign-out">
-          <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
-            {t("signOut")}
-          </button>
-        </form>
-      </header>
-      <main className="flex flex-1 flex-col gap-6 p-6">{children}</main>
-    </div>
+    <TooltipProvider>
+      {/* Always open on a wide screen: there is nothing to collapse it with. */}
+      <SidebarProvider open>
+        <ThemeSync />
+        <AppSidebar projects={links} user={{ login: viewer.login, image: viewer.image }} />
+        <SidebarInset className="min-w-0">
+          <header className="flex items-center gap-2 border-b bg-card px-4 py-2 md:hidden">
+            <SidebarTrigger />
+            <span className="font-semibold tracking-tight">{t("brand")}</span>
+          </header>
+          <div className="flex flex-1 flex-col gap-6 p-6">{children}</div>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
 

@@ -18,13 +18,14 @@ const row = (name: string, over: Partial<ProjectRow> = {}): ProjectRow => ({
   ...over,
 });
 
-function setup(rows: ProjectRow[], visible: string[]) {
+function setup(rows: ProjectRow[], visible: string[], managed: string[] = []) {
   const canView = vi.fn(async (repo: { name: string }) => visible.includes(repo.name));
   const store = {
     listConfigured: vi.fn(async () => rows),
     view: vi.fn(async (repo: { name: string }) => rows.find((r) => r.name === repo.name) ?? null),
   };
-  return { projects: createProjects({ store, canView }), canView, store };
+  const canManage = vi.fn(async (repo: { name: string }) => managed.includes(repo.name));
+  return { projects: createProjects({ store, canView, canManage }), canView, canManage, store };
 }
 
 describe("visibleTo", () => {
@@ -33,6 +34,12 @@ describe("visibleTo", () => {
     expect((await projects.visibleTo("octo")).map((p) => p.title)).toEqual(["API", "WEB"]);
     expect(canView).toHaveBeenCalledTimes(3);
     expect(canView).toHaveBeenCalledWith(expect.objectContaining({ name: "secret" }), "octo");
+  });
+  it("says which ones the user may manage, never asking about a hidden one", async () => {
+    const { projects, canManage } = setup([row("web"), row("api"), row("secret")], ["web", "api"], ["api", "secret"]);
+    expect((await projects.visibleTo("octo")).map((p) => [p.name, p.canManage])).toEqual([["api", true], ["web", false]]);
+    expect(canManage).toHaveBeenCalledTimes(2);
+    expect(canManage).not.toHaveBeenCalledWith(expect.objectContaining({ name: "secret" }), "octo");
   });
   it("is empty when nothing is visible", async () => {
     expect(await setup([row("web")], []).projects.visibleTo("octo")).toEqual([]);
