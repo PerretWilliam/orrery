@@ -6,7 +6,8 @@ const { join } = process.getBuiltinModule("node:path");
 const realFetch = globalThis.fetch;
 const API = "https://api.github.com";
 
-const HUB_YML = `version: 1
+// `npm run demo` serves its own file instead of the journeys' one.
+const HUB_YML = process.env.FAKE_HUB_YML ? readFileSync(process.env.FAKE_HUB_YML, "utf8") : `version: 1
 project:
   name: Starfall
 sources:
@@ -43,7 +44,7 @@ const ETAG = '"hub-v1"';
 // The second repository, whose file is invalid.
 const BROKEN_YML = readFileSync(join(__dirname, "broken.hub.yml"), "utf8");
 // Who GitHub says is a collaborator of the repositories, and with which role. Everybody else is a stranger.
-const COLLABORATORS = { alice: "write" };
+const COLLABORATORS = { alice: process.env.FAKE_HUB_ROLE ?? "write" };
 // With no allowlist, the members of the organization are who may use the hub: bob may, and sees no repository.
 const MEMBERS = ["alice", "bob"];
 

@@ -4,12 +4,20 @@ Thanks for helping. Orrery is AGPL-3.0; contributions are accepted under the sam
 
 ## Local setup
 
-Requirements: Node 24 (see `.nvmrc`), Docker (integration tests only).
+Requirements: Node 24 (see `.nvmrc`), Docker (integration tests and the demo).
 
 ```bash
 npm ci
 npm run dev
 ```
+
+## See the interface
+
+```bash
+npm run demo
+```
+
+Starts the dev server (hot reload) on a throwaway database with a fake GitHub and demo data, and prints sign-in links: no GitHub App, repository or `.env` needed. `npm run demo -- --setup` shows the first-run wizard. The widgets come from `scripts/demo/hub.yml` and `scripts/demo/data.json`. Stop `npm run dev` first: Next.js runs one dev server per checkout.
 
 ## Commands
 

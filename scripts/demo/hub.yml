@@ -1,0 +1,59 @@
+# The project of `npm run demo`, served by the fake GitHub as acme/web: every widget type, and the states worth
+# looking at. A test checks that this file stays valid and keeps one widget of each type.
+version: 1
+project:
+  name: Starfall
+  color: "#7c3aed"
+sources:
+  demo: { url: "http://127.0.0.1:3201/data.json", ttl: 60s }
+  missing: { url: "http://127.0.0.1:3201/nothing.json" }
+  gone: { url: "https://gone.invalid/data.json" }
+  private: { url: "http://10.0.0.1/data.json" }
+  secret: { url: "https://example.com/stats", headers: { Authorization: "Bearer ${DEMO_TOKEN}" } }
+pages:
+  - id: overview
+    title: Overview
+    widgets:
+      - { type: kpi, source: demo, path: players.total, label: Players, trend: players.delta }
+      - { type: kpi, source: demo, path: retention.d7, label: Day-7 retention, unit: "%", trend: retention.d7_delta, alert: { below: 18 } }
+      - { type: kpi, source: demo, path: revenue.today, label: Revenue today, unit: EUR, trend: revenue.delta }
+      - { type: kpi, title: "A deliberately long title, to see how a narrow card wraps it", source: demo, path: revenue.plan, label: Plan }
+      - { type: status, title: API, source: demo, path: services.api, up: [ok], degraded: [slow] }
+      - { type: status, title: Queue, source: demo, path: services.queue, up: [ok], degraded: [slow] }
+      - { type: status, title: Billing, source: demo, path: services.billing, up: [ok], degraded: [slow] }
+      - { type: markdown, title: Note from the file, content: "Season **3** ships on Friday. Read the `.hub.yml` [documentation](https://github.com)." }
+      - { type: markdown, title: Note from a source, source: demo, path: notes }
+  - id: charts
+    title: Charts
+    widgets:
+      - { type: line, title: Players per day, source: demo, path: daily, x: date, y: players }
+      - { type: bar, title: Sessions per day, source: demo, path: daily, x: date, y: sessions }
+      - { type: donut, title: Platforms, source: demo, path: platforms, name: platform, value: players }
+      - { type: cohort, title: Retention by week, source: demo, path: cohorts, cohort: week, values: retention }
+      - type: table
+        title: Top players
+        source: demo
+        path: leaderboard
+        searchable: true
+        columns:
+          - { header: Player, path: name }
+          - { header: Score, path: score, format: number }
+          - { header: Joined, path: joined, format: date }
+          - { header: State, path: state, format: badge }
+  - id: activity
+    title: Activity
+    widgets:
+      - { type: github.issues, title: Issues, state: all }
+      - { type: github.pull_requests, title: Pull requests, state: all }
+      - { type: github.workflow_runs, title: Workflow runs, branch: main }
+      - { type: github.releases, title: Releases, limit: 5 }
+  - id: states
+    title: States
+    widgets:
+      - { type: kpi, title: Empty, source: demo, path: nothing, label: Nothing }
+      - { type: kpi, title: Not found, source: missing, label: Users, path: total }
+      - { type: kpi, title: Source down, source: gone, label: Users, path: total }
+      - { type: kpi, title: Private address, source: private, label: Users, path: total }
+      - { type: kpi, title: Secret not set, source: secret, label: Users, path: total }
+      - { type: table, title: Empty table, source: demo, path: empty, columns: [{ header: Name, path: name }] }
+      - { type: line, title: Empty chart, source: demo, path: empty, x: date, y: players }
