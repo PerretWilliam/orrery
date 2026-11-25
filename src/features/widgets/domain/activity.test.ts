@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityItems, safeGithubUrl } from "./activity";
+import { activityItems, safeGithubUrl, toneOf } from "./activity";
 
 describe("activityItems", () => {
   it("returns well-formed items and nothing for anything else", () => {
@@ -8,6 +8,17 @@ describe("activityItems", () => {
     expect(activityItems([{ ...item, state: 3 }])).toEqual([]);
     expect(activityItems("no")).toEqual([]);
     expect(activityItems(null)).toEqual([]);
+  });
+});
+describe("toneOf", () => {
+  it.each([
+    ["success", ["open", "success", "released"]],
+    ["warning", ["queued", "requested", "waiting", "pending", "in_progress", "action_required", "prerelease"]],
+    ["destructive", ["failure", "timed_out", "startup_failure"]],
+    ["done", ["merged"]],
+    ["neutral", ["closed", "draft", "cancelled", "skipped", "unknown", "", "constructor", "__proto__"]],
+  ] as const)("is %s for its states", (tone, states) => {
+    for (const state of states) expect(toneOf(state), state).toBe(tone);
   });
 });
 describe("safeGithubUrl", () => {

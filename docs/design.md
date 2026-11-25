@@ -45,7 +45,19 @@ The values live in [`src/app/globals.css`](../src/app/globals.css), light and da
 
 ## State
 
-Always an icon and a word with the colour (see the `status` and `kpi` widgets). A trend arrow stays neutral: the hub does not know whether up is good.
+Always a word with the colour, and an icon where the state stands alone (see the `status` and `kpi` widgets).
+
+GitHub activity badges:
+
+| Colour | States |
+| --- | --- |
+| `success` | `open`, `success`, `released` |
+| `warning` | `queued`, `requested`, `waiting`, `pending`, `in_progress`, `action_required`, `prerelease` |
+| `destructive` | `failure`, `timed_out`, `startup_failure` |
+| `secondary` (violet) | `merged` |
+| outline (neutral) | `closed`, `draft`, `cancelled`, `skipped` and any other |
+
+Badges from a source's own data (a `badge` table column) stay violet: the hub does not know what their words mean. A trend arrow stays neutral for the same reason: the hub does not know whether up is good.
 
 ## Project colour
 

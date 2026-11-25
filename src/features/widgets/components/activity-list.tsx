@@ -1,8 +1,10 @@
 import { useFormatter } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { activityItems, safeGithubUrl } from "../domain/activity";
+import { activityItems, safeGithubUrl, toneOf, type Tone } from "../domain/activity";
 import { WidgetEmpty } from "./widget-states";
+
+const BADGE = { success: "success", warning: "warning", destructive: "destructive", done: "secondary", neutral: "outline" } as const satisfies Record<Tone, string>;
 
 /** The list every GitHub widget shows: key, title, state and author, all text; the link only on github.com. */
 export function ActivityList({ title, data }: { title: string | undefined; data: unknown }) {
@@ -35,7 +37,7 @@ export function ActivityList({ title, data }: { title: string | undefined; data:
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
                   {item.at && !Number.isNaN(Date.parse(item.at)) ? <time dateTime={item.at} className="text-xs text-muted-foreground">{format.dateTime(new Date(item.at), { dateStyle: "medium", timeZone: "UTC" })}</time> : null}
-                  <Badge variant="secondary">{item.state}</Badge>
+                  <Badge variant={BADGE[toneOf(item.state)]}>{item.state}</Badge>
                 </span>
               </li>
             );
