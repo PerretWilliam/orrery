@@ -227,6 +227,13 @@ describe("refresh", () => {
     expect(asked[0]).toEqual({ repo: "r1", path: ".hub.yml", etag: "e1" });
     expect(saved[0].state.configEtag).toBe("e2");
   });
+  it("forgets the stored ETag when forced, so an unchanged file is read and parsed again", async () => {
+    const stored = new Map([[1, { configFile: ".hub.yml" as const, configEtag: "e1", configSha: "s1", configIssues: null }]]);
+    const { discovery, saved, asked } = setup({ repos: [summary(1)], files: { r1: { ".hub.yml": file(VALID, "e1", "s1") } }, stored });
+    await discovery.refresh({ owner: "acme", name: "r1" }, { force: true });
+    expect(asked[0].etag).toBeUndefined();
+    expect(saved[0].state.configSha).toBe("s1");
+  });
   it("looks at everything when the repository is new to the hub", async () => {
     const { discovery, git } = setup({ repos: [summary(1)] });
     expect(await discovery.refresh({ owner: "acme", name: "brand-new" })).toEqual({ checked: 1, failed: 0 });

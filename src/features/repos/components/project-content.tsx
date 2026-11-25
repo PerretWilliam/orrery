@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { getAccessPolicy } from "@/features/access/server/runtime";
 import { currentViewer } from "@/features/auth/server/runtime";
 import { pickPage } from "../domain/project";
 import { getProjects } from "../server/runtime";
@@ -24,7 +25,7 @@ export async function ProjectContent({ params }: { params: Params }) {
 
   return (
     <AppShell projects={await projects.visibleTo(viewer.login)} current={project}>
-      <ProjectView project={project} page={page} />
+      <ProjectView project={project} page={page} canManage={await getAccessPolicy().can(project, viewer.login, "manage_hosts")} />
       <RememberLocation place={{ owner: project.owner, name: project.name, page: page?.id ?? null }} />
     </AppShell>
   );
