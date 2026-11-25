@@ -64,7 +64,7 @@ A widget that failed is a card with a `destructive` outline and wash, an icon, t
 
 ## Logo
 
-[`src/app/icon.svg`](../src/app/icon.svg): a white orbit on the light-mode `primary` (`#6a3cf0`), the same in both modes. A project colour never changes it.
+[`src/app/icon.svg`](../src/app/icon.svg): an orrery whose arms are Git branches. The sun and its orbit on a pedestal, each branch ending in a commit that is also a planet: the code and what turns around it. White on the light-mode `primary` (`#6a3cf0`), the same in both modes. A project colour never changes it.
 
 ## Project colour
 
