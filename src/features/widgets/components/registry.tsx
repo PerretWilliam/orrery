@@ -10,14 +10,14 @@ type Loaders = { readonly [T in WidgetType]: () => Promise<{ default: ComponentT
  * share the placeholder. A test compares these keys with the schema, and `scripts/widget-budgets.mjs` caps their weight.
  */
 export const LOADERS: Loaders = {
-  kpi: () => import("./widgets/placeholder"),
-  status: () => import("./widgets/placeholder"),
+  kpi: () => import("./widgets/kpi"),
+  status: () => import("./widgets/status"),
   line: () => import("./widgets/placeholder"),
   bar: () => import("./widgets/placeholder"),
   donut: () => import("./widgets/placeholder"),
   table: () => import("./widgets/placeholder"),
   cohort: () => import("./widgets/placeholder"),
-  markdown: () => import("./widgets/placeholder"),
+  markdown: () => import("./widgets/markdown"),
   "github.issues": () => import("./widgets/placeholder"),
   "github.pull_requests": () => import("./widgets/placeholder"),
   "github.workflow_runs": () => import("./widgets/placeholder"),

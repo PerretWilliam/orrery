@@ -65,6 +65,14 @@
     "fix": "Fix",
     "crashed": "This widget could not be drawn.",
     "updated": "Updated {when}",
-    "refreshing": "Updated {when}, refreshing"
+    "refreshing": "Updated {when}, refreshing",
+    "trend": "{value} vs previous",
+    "alertBelow": "Alert: below {limit}",
+    "alertAbove": "Alert: above {limit}",
+    "health": {
+      "up": "Up",
+      "degraded": "Degraded",
+      "down": "Down"
+    }
   }
 }
