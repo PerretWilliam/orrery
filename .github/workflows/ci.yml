@@ -123,6 +123,8 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with: { node-version-file: .nvmrc, cache: npm }
       - run: npm ci
+      - name: Security suite (one negative test per threat of docs/scope.md)
+        run: npm run test:security
       - name: Dependency audit (production dependencies)
         run: npm run audit:deps
       - name: Semgrep
@@ -139,3 +141,5 @@ jobs:
         run: >
           docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:v2.7.1
           scan source --config=/src/osv-scanner.toml --lockfile=/src/package-lock.json
+      - name: The gates can fail (generated leaked key and vulnerable dependency)
+        run: sh scripts/security-gates-canary.sh

@@ -23,7 +23,7 @@
     "src/features/access/server/seed.ts",
     "src/features/webhooks/domain/**/*.ts",
     "src/features/webhooks/server/handler.ts",
-    "src/features/webhooks/server/body.ts",
+    "src/lib/body.ts",
     "src/features/repos/domain/**/*.ts",
     "src/features/widgets/domain/markdown.ts",
     "src/features/repos/server/github.ts",

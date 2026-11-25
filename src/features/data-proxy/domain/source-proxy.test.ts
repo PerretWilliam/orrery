@@ -149,6 +149,7 @@ describe("a request with no cache entry", () => {
         method: "GET",
         headers: { accept: "application/json", "user-agent": "Orrery" },
         body: undefined,
+        stayOnHost: false,
       },
       { adminAllow: ["nas.lan"], projectAllow: [] },
     );
@@ -166,6 +167,7 @@ describe("a request with no cache entry", () => {
           "content-type": "application/json",
         },
         body: '{"query":"{ stats }"}',
+        stayOnHost: false,
       },
       expect.anything(),
     );
@@ -221,6 +223,34 @@ describe("secrets", () => {
     const [url, init] = fetch.mock.calls[0] ?? [];
     expect(url).toBe("https://api.example.com/stats?token=s3cr3t-value-123");
     expect(init?.headers.authorization).toBe("Bearer s3cr3t-value-123");
+  });
+  it("cuts a secret the source echoes back, before caching or showing it", async () => {
+    const { proxy, store } = setup({
+      fetch: async (_url, init) => ({
+        data: { seen: init.headers.authorization },
+      }),
+    });
+    const request = req({ headers: { Authorization: "Bearer ${API_TOKEN}" } });
+    for (const result of [
+      await proxy.preview(request),
+      await proxy.get(request),
+    ])
+      expect(result).toMatchObject({
+        ok: true,
+        data: { seen: "Bearer [redacted]" },
+      });
+    expect(JSON.stringify([...store.entries.values()])).not.toContain(
+      "s3cr3t-value-123",
+    );
+  });
+  it("keeps a request with a secret in its query on the host, and only that one", async () => {
+    const { proxy, fetch } = setup();
+    await proxy.preview(req({ url: "https://api.example.com/x?k=${API_TOKEN}" }));
+    await proxy.preview(req({ headers: { A: "${API_TOKEN}" } }));
+    expect(fetch.mock.calls.map(([, init]) => init.stayOnHost)).toEqual([
+      true,
+      false,
+    ]);
   });
   it("never puts a secret value in the cache, the key or the logs", async () => {
     const out = logged();

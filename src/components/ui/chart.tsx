@@ -81,8 +81,10 @@ function ChartContainer({
 }
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+  // Orrery, security: a key is written unescaped into this <style>, and widgets key their config by source data (a
+  // donut's slice name). Only plain identifiers get through; keep this line if the component is ever regenerated.
   const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme ?? config.color
+    ([key, config]) => /^[\w-]+$/.test(key) && (config.theme ?? config.color)
   )
 
   if (!colorConfig.length) {

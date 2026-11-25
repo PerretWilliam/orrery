@@ -49,6 +49,7 @@ describe("SsrfError", () => {
     ["ssrf_dns_failed", "resolved"],
     ["ssrf_too_many_redirects", "5 times"],
     ["ssrf_bad_redirect", "invalid redirect"],
+    ["ssrf_redirect_blocked", "secret in its query"],
   ] as const)("%s has a readable message", (code, words) => {
     const error = new SsrfError(code);
     expect(error).toMatchObject({ code, name: "SsrfError" });
@@ -65,6 +66,7 @@ describe("SsrfError", () => {
       "ssrf_dns_failed",
       "ssrf_too_many_redirects",
       "ssrf_bad_redirect",
+      "ssrf_redirect_blocked",
     ] as const;
     expect(new Set(codes.map((code) => new SsrfError(code).fix)).size).toBe(
       codes.length,
@@ -136,7 +138,17 @@ describe("classifyAddress", () => {
     ["::7f00:1", "private"],
     ["::2:0:0", "public"],
     ["64:ff9b::7f00:1", "private"],
-    ["64:ff9b:1::1", "public"],
+    ["64:ff9b:0:0:0:1::", "public"],
+    ["64:ff9b:1::7f00:1", "private"],
+    ["64:ff9b:1:ffff::1", "private"],
+    ["64:ff9b:2::1", "public"],
+    ["::ffff:0:127.0.0.1", "private"],
+    ["::ffff:1:0:0", "public"],
+    ["3fff::1", "private"],
+    ["3fff:fff::1", "private"],
+    ["3fff:1000::1", "public"],
+    ["5f00::1", "private"],
+    ["5f01::1", "public"],
     ["100::1", "private"],
     ["100:0:0:1::1", "public"],
     ["2001::1", "private"],
@@ -988,6 +1000,43 @@ describe("guardedFetch", () => {
         run("https://example.com/", scripted(redirect(302, "http://[bad"))),
       ),
     ).toBe("ssrf_bad_redirect");
+  });
+  it.each([
+    ["another host", "https://other.com/?k=v"],
+    ["plain http", "http://example.com/x"],
+    ["another scheme", "ftp://example.com/x"],
+  ])(
+    "with a secret in the URL, never follows a redirect to %s",
+    async (_name, location) => {
+      const send = scripted(redirect(302, location), ok());
+      expect(
+        await codeOf(
+          run("https://example.com/?k=v", send, { stayOnHost: true }),
+        ),
+      ).toBe("ssrf_redirect_blocked");
+      expect(send).toHaveBeenCalledTimes(1);
+    },
+  );
+  it("with a secret in the URL, follows redirects that stay on the host or move to https", async () => {
+    const send = scripted(
+      redirect(302, "/moved"),
+      redirect(307, "https://example.com:8443/x"),
+      ok(),
+    );
+    expect(
+      (await run("http://example.com/", send, { stayOnHost: true })).url.href,
+    ).toBe("https://example.com:8443/x");
+  });
+  it("with a secret in the URL, checks every hop, not only the first", async () => {
+    const send = scripted(
+      redirect(302, "/a"),
+      redirect(302, "https://other.com/"),
+      ok(),
+    );
+    expect(
+      await codeOf(run("https://example.com/", send, { stayOnHost: true })),
+    ).toBe("ssrf_redirect_blocked");
+    expect(send).toHaveBeenCalledTimes(2);
   });
   it("follows 5 redirects and refuses the 6th", async () => {
     const five = scripted(

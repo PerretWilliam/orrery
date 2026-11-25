@@ -2,6 +2,7 @@ import { API_ERRORS } from "@/features/api/domain/errors";
 import type { RepoRef } from "@/features/repos/domain/git-provider";
 import { CONFIG_ERRORS } from "@/features/config/domain/errors";
 import { parseConfig } from "@/features/config/domain/parse-config";
+import { readCapped } from "@/lib/body";
 
 /** The calls of the REST API the tools stand on: same token check, same access policy, same rate limit, same bodies. */
 export type McpApi = {
@@ -158,14 +159,16 @@ export function createMcp(api: McpApi) {
 
   return {
     async handle(request: Request): Promise<Response> {
-      const raw = await request.text();
+      // Capped while it streams: this runs before the token check, so nothing larger is ever buffered.
+      const bytes = await readCapped(request, MAX_BODY);
       let message: {
         id?: unknown;
         method?: unknown;
         params?: { name?: unknown; arguments?: unknown };
       } | null = null;
       try {
-        message = raw.length > MAX_BODY ? null : JSON.parse(raw);
+        message =
+          bytes === null ? null : JSON.parse(new TextDecoder().decode(bytes));
       } catch {
         return rpcError(null, -32700, "Parse error");
       }

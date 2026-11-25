@@ -1,5 +1,6 @@
 import { authenticatedMutation } from "@/features/auth/server/route-guard";
 import { currentViewer } from "@/features/auth/server/runtime";
+import { readForm } from "@/lib/body";
 import { redirectTo } from "@/features/setup/server/http";
 import { settingsPath } from "../domain/hosts";
 import { getProjectSettings } from "./runtime";
@@ -12,7 +13,7 @@ async function mutate(request: Request, target: Target, run: (form: FormData, wh
   const guarded = await authenticatedMutation(request);
   if ("response" in guarded) return guarded.response;
   const viewer = await currentViewer(request.headers);
-  const form = await request.formData().catch(() => null);
+  const form = viewer ? await readForm(request) : null; // nothing is read for a stranger
   if (!viewer || !form) return new Response(null, { status: viewer ? 400 : 401 });
   const result = await run(form, viewer);
   if (result.ok) return redirectTo(settingsPath(target, "?saved=1"));
