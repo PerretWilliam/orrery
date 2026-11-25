@@ -19,7 +19,7 @@ vi.mock("next/headers", () => ({
   headers: async () => new Headers({ host: "hub.test" }),
   cookies: async () => ({ get: (name: string) => (name === "orrery_last" && cookieValue() !== undefined ? { value: cookieValue() } : undefined) }),
 }));
-vi.mock("next/navigation", () => ({ redirect: (to: string) => redirect(to), usePathname: () => "/" }));
+vi.mock("next/navigation", () => ({ redirect: (to: string) => redirect(to) }));
 
 import { HomeContent } from "./home-content";
 
@@ -106,10 +106,8 @@ describe("HomeContent", () => {
     cookieValue.mockReturnValue("https://evil.test");
     expect(await open()).toBe("redirect:/p/acme/web");
   });
-  it("shows an empty state, with the shell, when there is nothing to see", async () => {
+  it("goes to the welcome screen when there is nothing to see", async () => {
     visibleTo.mockResolvedValue([]);
-    show((await HomeContent()) as ReactElement);
-    expect(screen.getByRole("heading", { name: "No projects yet" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /octo/ })).toBeInTheDocument();
+    expect(await open()).toBe("redirect:/welcome");
   });
 });
