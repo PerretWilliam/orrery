@@ -31,6 +31,9 @@ export function createApi({ authenticate, projects, widgetData, limiter }: ApiDe
   }
 
   return {
+    /** Authentication and rate limit for one request, then `run` as the token's owner. Shared with the MCP server. */
+    guard,
+
     listProjects: (request: Request) => guard(request, async (login) => json({ projects: (await projects.visibleTo(login)).map(summary) })),
 
     getProject: (request: Request, repo: RepoRef) =>
