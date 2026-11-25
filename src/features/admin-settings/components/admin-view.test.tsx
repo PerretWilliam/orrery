@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import messages from "../../../../messages/en.json";
 import { AdminView } from "./admin-view";
+
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
 
 const empty = { allowlist: [], hosts: [], admins: ["octo"], rules: [], key: null };
 const show = (props: Partial<Parameters<typeof AdminView>[0]> = {}) =>

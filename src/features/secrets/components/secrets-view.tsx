@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { SavedToast } from "@/components/saved-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,11 +19,7 @@ export function SecretsView({ project, secrets, saved, error }: Props) {
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">{t("title", { project: project.title })}</h1>
       <p className="text-sm text-muted-foreground">{t("intro")}</p>
-      {saved ? (
-        <Alert>
-          <AlertTitle>{t("saved")}</AlertTitle>
-        </Alert>
-      ) : null}
+      {saved ? <SavedToast message={t("saved")} /> : null}
       {error ? (
         <Alert variant="destructive">
           <AlertTitle>{t("errorTitle")}</AlertTitle>

@@ -142,3 +142,15 @@
     @apply font-sans;
   }
 }
+
+/* Toasts: the library's own stylesheet, repainted with the tokens above. Outside any layer, so it wins. */
+.tst-viewport {
+  font-family: inherit;
+  --tst-bg: var(--popover);
+  --tst-fg: var(--popover-foreground);
+  --tst-ring: var(--border);
+  --tst-success: var(--success);
+  --tst-error: var(--destructive);
+  --tst-warning: var(--warning);
+  --tst-info: var(--primary);
+}

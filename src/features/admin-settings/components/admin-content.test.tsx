@@ -26,6 +26,8 @@ vi.mock("next/navigation", () => ({
 
 import { AdminContent } from "./admin-content";
 
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
+
 const run = (query: { saved?: string; error?: string } = {}) => AdminContent({ searchParams: Promise.resolve(query) });
 const outcome = async () => {
   try {

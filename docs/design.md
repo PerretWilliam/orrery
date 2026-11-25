@@ -66,6 +66,10 @@ A widget that failed is a card with a `destructive` outline and wash, an icon, t
 
 [`src/app/icon.svg`](../src/app/icon.svg): an orrery whose arms are Git branches. The sun and its orbit on a pedestal, each branch ending in a commit that is also a planet: the code and what turns around it. White on the light-mode `primary` (`#6a3cf0`), the same in both modes. A project colour never changes it.
 
+## Feedback
+
+A form that worked says so in a toast (bottom right, [Ding](https://ding.yusufcengiz.dev)) painted with the tokens above. A failure stays on the page, with its code and fix: it must still be there when the reader gets to it.
+
 ## Project colour
 
 `project.color` in `.hub.yml` replaces `primary` and `ring` inside that project's view, with black or white text chosen for contrast. It does not change charts' `chart-*` tokens or state colours.

@@ -25,6 +25,8 @@ vi.mock("next/navigation", () => ({
 
 import { TokensContent } from "./tokens-content";
 
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
+
 const run = (query: { saved?: string; error?: string } = {}) => TokensContent({ searchParams: Promise.resolve(query) });
 const show = (ui: ReactElement) => render(<NextIntlClientProvider locale="en" messages={messages}>{ui}</NextIntlClientProvider>);
 const TOKEN = `orr_${"a".repeat(43)}`;

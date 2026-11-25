@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { SavedToast } from "@/components/saved-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,11 +70,7 @@ export function AdminView({ overview, audit, saved, error }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold tracking-tight">{t("title")}</h2>
-      {saved ? (
-        <Alert>
-          <AlertTitle>{t("saved")}</AlertTitle>
-        </Alert>
-      ) : null}
+      {saved ? <SavedToast message={t("saved")} /> : null}
       {error ? (
         <Alert variant="destructive">
           <AlertTitle>{t("errorTitle")}</AlertTitle>

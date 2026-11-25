@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import messages from "../../../../messages/en.json";
 import { SecretsView } from "./secrets-view";
+
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
 
 const project = { owner: "acme", name: "web", title: "Starfall" };
 const show = (props: Partial<Parameters<typeof SecretsView>[0]> = {}) =>

@@ -193,5 +193,9 @@
     "admin": "Administration",
     "themeTitle": "Theme",
     "themeBody": "Remembered in this browser only. System follows your device."
+  },
+  "Toasts": {
+    "region": "Notifications",
+    "dismiss": "Dismiss notification"
   }
 }

@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import messages from "../../../../messages/en.json";
 import { TokensView } from "./tokens-view";
+
+vi.mock("@/components/saved-toast", () => ({ SavedToast: ({ message }: { message: string }) => <p>{message}</p> }));
 
 const NOW = new Date("2026-06-10T00:00:00Z");
 const token = (over = {}) => ({ id: "t1", name: "Claude", createdAt: new Date("2026-06-01T00:00:00Z"), expiresAt: new Date("2026-09-01T00:00:00Z"), lastUsedAt: null, revokedAt: null, ...over });
