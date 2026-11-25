@@ -9,7 +9,12 @@ import { getMcp } from "./runtime";
 describe("getMcp", () => {
   it("is one instance, on top of the REST API's guard", async () => {
     expect(getMcp()).toBe(getMcp());
-    const response = await getMcp().handle(new Request("http://x", { method: "POST", body: '{"id":1,"method":"ping"}' }));
+    const response = await getMcp().handle(
+      new Request("http://x", {
+        method: "POST",
+        body: '{"id":1,"method":"ping"}',
+      }),
+    );
     expect(await response.text()).toBe("guarded");
   });
 });

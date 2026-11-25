@@ -655,3 +655,35 @@ describe("purge", () => {
     expect(Math.abs(cutoff - (Date.now() - 7 * 24 * HOUR))).toBeLessThan(5000);
   });
 });
+
+describe("preview (a dry run)", () => {
+  it("asks the source now, ignoring and leaving the cache alone", async () => {
+    const store = memoryStore({
+      [cacheKey(req())]: {
+        body: { old: 1 },
+        fetchedAt: new Date(T0),
+        expiresAt: new Date(T0 + 60_000),
+        lastAccessedAt: new Date(T0),
+      },
+    });
+    const { proxy, fetch } = setup({}, store);
+    const result = await proxy.preview(req());
+    expect(result).toMatchObject({ ok: true, data: { v: 1 } });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(store.get).not.toHaveBeenCalled();
+    expect(store.put).not.toHaveBeenCalled();
+  });
+  it("applies the secret binding and returns failures instead of throwing", async () => {
+    const { proxy, fetch } = setup();
+    const unbound = await proxy.preview(
+      req({ headers: { authorization: "Bearer ${OTHER}" } }),
+    );
+    expect(unbound.ok).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+    fetch.mockRejectedValue(new Error("boom"));
+    expect(await proxy.preview(req())).toEqual({
+      ok: false,
+      errors: [expect.objectContaining({ code: "source_internal" })],
+    });
+  });
+});

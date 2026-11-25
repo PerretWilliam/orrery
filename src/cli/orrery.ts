@@ -1,5 +1,6 @@
 import { closeSync, openSync, readSync } from "node:fs";
 import { LIMITS } from "@/features/config/domain/limits";
+import { runPreview } from "./preview";
 import { runCli } from "./validate";
 
 /** Process wiring of the CLI, bundled to dist/cli/orrery.cjs. Logic lives in validate.ts. */
@@ -10,13 +11,23 @@ function read(path: string): string {
   const fd = openSync(path, "r");
   try {
     const buffer = Buffer.alloc(LIMITS.maxBytes + 1);
-    return buffer.toString("utf8", 0, readSync(fd, buffer, 0, buffer.length, 0));
+    return buffer.toString(
+      "utf8",
+      0,
+      readSync(fd, buffer, 0, buffer.length, 0),
+    );
   } finally {
     closeSync(fd);
   }
 }
 
-const { code, stdout, stderr } = runCli(process.argv.slice(2), read);
-process.stdout.write(stdout);
-process.stderr.write(stderr);
-process.exitCode = code;
+const argv = process.argv.slice(2);
+void (
+  argv[0] === "preview"
+    ? runPreview(argv.slice(1), { read, fetch, env: process.env })
+    : Promise.resolve(runCli(argv, read))
+).then(({ code, stdout, stderr }) => {
+  process.stdout.write(stdout);
+  process.stderr.write(stderr);
+  process.exitCode = code;
+});
