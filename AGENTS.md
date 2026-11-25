@@ -21,7 +21,7 @@ npm run mutation           # Stryker, min 90% on sensitive modules
 - Stack: Next.js App Router, strict TypeScript, Tailwind v4, shadcn/ui on **Base UI** (`base-nova` style, not Radix), TanStack Query, Zod, Drizzle on PostgreSQL.
 - `src/features/<name>/{domain,server,components}`: `domain/` is pure logic with no framework imports, fully tested; `server/` does database, Git and cache access; `components/` is thin UI. Shared code in `src/lib/`.
 - Git hosts sit behind `GitProviderInterface` (`src/features/repos/domain/git-provider.ts`); GitHub only in V1.
-- Before writing a UI component, search the shadcn MCP and `docs/resources.md`.
+- Before writing a UI component, search the shadcn MCP and `docs/resources.md`. Colors, type and shape follow `docs/design.md`.
 
 ## Rules
 

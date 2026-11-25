@@ -11,7 +11,7 @@ export function AppShell({ projects, current, children }: { projects: readonly P
   const t = useTranslations("Shell");
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-6 py-3">
+      <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b bg-card px-6 py-3">
         <Link href="/" className="text-lg font-semibold tracking-tight">
           {t("brand")}
         </Link>

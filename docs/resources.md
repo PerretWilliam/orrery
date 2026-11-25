@@ -29,4 +29,4 @@ Rule: **before writing any component by hand, search the shadcn MCP and this fil
 
 ## Themes
 
-Themes are CSS variables in `src/app/globals.css` (light and dark). To try a palette, list the tweakcn themes with the shadcn MCP `list_themes` and apply one with `apply_theme`, then check contrast in both modes. Keep the variable names shadcn expects so components keep working.
+Themes are CSS variables in `src/app/globals.css` (light and dark). The theme and the rules for using its colors are in [design.md](design.md): read it before changing a color. Keep the variable names shadcn expects so components keep working.
