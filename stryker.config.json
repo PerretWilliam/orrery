@@ -43,5 +43,7 @@
   "htmlReporter": {
     "fileName": "reports/mutation/index.html"
   },
-  "ignoreStatic": false
+  "ignoreStatic": false,
+  "incremental": true,
+  "incrementalFile": "reports/stryker-incremental.json"
 }
