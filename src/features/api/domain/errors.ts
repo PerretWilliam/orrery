@@ -20,6 +20,11 @@ export const API_ERRORS = {
     message: "The request body is not valid.",
     fix: 'Send JSON like {"yaml": "<.hub.yml text>", "source": "<source id>"}; see the OpenAPI spec.',
   },
+  api_preview_get_only: {
+    status: 400,
+    message: "A preview only sends GET requests: agent tokens are read-only.",
+    fix: "Preview a GET source without a method-override header. A POST source is fetched once its file is on the default branch.",
+  },
   api_not_found: {
     status: 404,
     message: "No such project, page or widget, or you may not see it.",

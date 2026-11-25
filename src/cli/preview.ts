@@ -9,6 +9,7 @@ export type Preview = {
 };
 
 const USAGE = `Usage: orrery preview --project <owner/repo> (--source <id> | --widget <page>:<index>) [--json] <file>
+Fetches a GET source: a preview never sends anything else.
 Environment: ORRERY_URL (the instance, https unless localhost) and ORRERY_TOKEN (an agent token of a maintainer of the project).
 `;
 const done = (

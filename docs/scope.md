@@ -18,7 +18,7 @@ An AI agent must be able to set up, read and extend the hub as easily as a perso
 | --- | --- | --- |
 | Config schema | Write and check a `.hub.yml` against a published JSON Schema, with a description and an example on every field; the server validates with the same schema | 1 |
 | CLI: validate | `orrery validate` checks a config offline with path-and-line errors (command name provisional) | 1 |
-| CLI: preview | `orrery preview` dry-runs a source or widget against an instance with an agent token, honoring the host allowlist and secret host binding | 2 |
+| CLI: preview | `orrery preview` dry-runs a GET source or widget against an instance with an agent token, honoring the host allowlist and secret host binding. POST sources are not previewed: agent tokens are read-only | 2 |
 | REST API | Versioned read API (`/api/v1`) with an OpenAPI spec: projects, pages, widget data, data freshness, GitHub data | 2 |
 | MCP server | The same read capabilities as tools for MCP clients over Streamable HTTP, authenticated by agent token: list projects, read a widget's data, explain an error, validate a config | 2 |
 | Agent tokens | Per-user, read-only in V1, revocable, listed in settings and recorded in the audit log | 2 |

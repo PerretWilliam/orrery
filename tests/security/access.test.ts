@@ -374,6 +374,24 @@ describe("threat: API abuse", () => {
     expect((await api.listProjects(get("carol"))).status).toBe(200);
   });
 
+  it("lets the preview send nothing but a read: an agent token is read-only, a maintainer's too", async () => {
+    const { api, preview } = hub();
+    preview.mockResolvedValue({ ok: false, errors: [] });
+    const send = (extra: string) => {
+      const yaml = `version: 1\nproject: {name: A}\nsources:\n  s:\n    url: https://x.test/a\n    ${extra}\npages: [{id: main, title: Main, widgets: []}]\n`;
+      const request = new Request("http://hub.test/x", { method: "POST", headers: { authorization: "Bearer alice" }, body: JSON.stringify({ yaml, source: "s" }) });
+      return api.previewSource(request, { owner: "acme", name: "private" });
+    };
+    for (const write of ["method: POST", "headers: { X-HTTP-Method-Override: DELETE }"]) {
+      const response = await send(write);
+      expect(response.status).toBe(400);
+      expect((await response.json()).errors[0].code).toBe("api_preview_get_only");
+    }
+    expect(preview).not.toHaveBeenCalled();
+    await send("method: GET");
+    expect(preview).toHaveBeenCalledTimes(1);
+  });
+
   it("stops reading an oversized body: before the token check on MCP, on the preview too", async () => {
     const { api, rpc, authenticate, preview } = hub();
     const huge = "x".repeat(2 * 1024 * 1024);

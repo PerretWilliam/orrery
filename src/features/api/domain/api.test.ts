@@ -10,6 +10,7 @@ describe("API error catalog", () => {
       "api_rate_limited",
       "api_forbidden",
       "api_invalid_request",
+      "api_preview_get_only",
       "api_not_found",
     ]));
   it("answers with code, path, message and fix, uncached", async () => {

@@ -31,6 +31,8 @@ export type ApiDeps = {
 export type { ProjectsDeps };
 
 const UNTRUSTED = "untrusted" as const;
+/** Headers some APIs read to treat a request as another method. */
+const METHOD_OVERRIDE = /^x-(http-method(-override)?|method-override)$/i;
 const json = (body: object) =>
   Response.json(
     { trust: UNTRUSTED, ...body },
@@ -176,8 +178,9 @@ export function createApi({
       }),
 
     /**
-     * Fetches one source of a config the caller sends, now and without the cache: the way to try a `.hub.yml` before committing it. Needs the
+     * Fetches one GET source of a config the caller sends, now and without the cache: the way to try a `.hub.yml` before committing it. Needs the
      * `manage` right, since it makes the hub call out with the project's secrets (still only to their bound hosts, and only to allowed hosts).
+     * Nothing but a read leaves: the caller writes the request, and an agent token is read-only.
      */
     previewSource: (request: Request, repo: RepoRef) =>
       guard(request, async (login) => {
@@ -210,6 +213,17 @@ export function createApi({
         if (!source)
           return apiError(
             "api_invalid_request",
+            {},
+            body.page === undefined ? "source" : "page",
+          );
+        if (
+          source.method !== "GET" ||
+          Object.keys(source.headers ?? {}).some((name) =>
+            METHOD_OVERRIDE.test(name),
+          )
+        )
+          return apiError(
+            "api_preview_get_only",
             {},
             body.page === undefined ? "source" : "page",
           );
