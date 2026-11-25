@@ -1,5 +1,6 @@
 import { createAccessStore } from "@/features/access/server/drizzle-store";
 import { seedAccess } from "@/features/access/server/seed";
+import { startCachePurgeJob } from "@/features/data-proxy/server/runtime";
 import { startDiscovery } from "@/features/repos/server/runtime";
 import { getDb } from "@/lib/db/instance";
 import { runMigrations } from "@/lib/db/migrate";
@@ -16,5 +17,8 @@ export async function startInstance(): Promise<void> {
     store: () => createSetupStore(getDb()),
     token: getSetupToken(),
   });
-  if (process.env.DATABASE_URL) startDiscovery();
+  if (process.env.DATABASE_URL) {
+    startDiscovery();
+    startCachePurgeJob();
+  }
 }

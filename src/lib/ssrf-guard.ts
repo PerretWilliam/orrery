@@ -39,10 +39,30 @@ const MESSAGES: Record<SsrfErrorCode, string> = {
   ssrf_bad_redirect: "The source sent an invalid redirect",
 };
 
+const FIXES: Record<SsrfErrorCode, string> = {
+  ssrf_invalid_url:
+    "Write the source URL as a full http(s) address, for example https://api.example.com/stats.",
+  ssrf_scheme_blocked: "Use an http:// or https:// URL.",
+  ssrf_credentials_blocked:
+    "Remove the user name and password from the URL and send them in a header with a ${SECRET_NAME} reference.",
+  ssrf_address_blocked:
+    "Use a public address, or ask the instance admin to allow this private host in the instance settings.",
+  ssrf_host_not_allowed:
+    "Add the host to the project's allowed hosts, or point the source at a host that is already listed.",
+  ssrf_dns_failed:
+    "Check the spelling of the host name and that its DNS record exists.",
+  ssrf_too_many_redirects:
+    "Point the source at its final URL instead of a chain of redirects.",
+  ssrf_bad_redirect:
+    "Fix the Location header of the source, or point the source at its final URL.",
+};
+
 export class SsrfError extends Error {
+  readonly fix: string;
   constructor(readonly code: SsrfErrorCode) {
     super(Reflect.get(MESSAGES, code));
     this.name = "SsrfError";
+    this.fix = Reflect.get(FIXES, code);
   }
 }
 

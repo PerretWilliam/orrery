@@ -23,6 +23,8 @@ export const coverageExclude = [
   "src/features/access/server/drizzle-store.ts",
   // Drizzle implementation of the repository store: SQL only, exercised on a real Postgres by tests/integration/repo-store.test.ts.
   "src/features/repos/server/drizzle-store.ts",
+  // Drizzle implementation of the source cache and of the SSRF policy loader: SQL only, exercised on a real Postgres by tests/integration/http-cache-store.test.ts.
+  "src/features/data-proxy/server/drizzle-store.ts",
   // Tests themselves and setup.
   "src/**/*.test.{ts,tsx}",
 ];

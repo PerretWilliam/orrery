@@ -53,6 +53,22 @@ describe("SsrfError", () => {
     const error = new SsrfError(code);
     expect(error).toMatchObject({ code, name: "SsrfError" });
     expect(error.message).toContain(words);
+    expect(error.fix.length).toBeGreaterThan(20);
+  });
+  it("gives every code its own fix", () => {
+    const codes = [
+      "ssrf_invalid_url",
+      "ssrf_scheme_blocked",
+      "ssrf_credentials_blocked",
+      "ssrf_address_blocked",
+      "ssrf_host_not_allowed",
+      "ssrf_dns_failed",
+      "ssrf_too_many_redirects",
+      "ssrf_bad_redirect",
+    ] as const;
+    expect(new Set(codes.map((code) => new SsrfError(code).fix)).size).toBe(
+      codes.length,
+    );
   });
 });
 
