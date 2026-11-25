@@ -18,14 +18,14 @@ afterEach(() => vi.clearAllMocks());
 describe("WidgetFrame", () => {
   it("draws the renderer with the source's data, then the age of the data", async () => {
     load.mockResolvedValue({ ok: true, data: { n: 1 }, fetchedAt: new Date(Date.now() - 120_000), stale: false });
-    show((await WidgetFrame({ project, widget: { type: "table", title: "Players" } as never })) as ReactElement);
-    expect(await screen.findByText("table · Not drawn yet")).toBeInTheDocument();
+    show((await WidgetFrame({ project, widget: { type: "cohort", title: "Players" } as never })) as ReactElement);
+    expect(await screen.findByText("cohort · Not drawn yet")).toBeInTheDocument();
     expect(screen.getByText("Updated 2 minutes ago")).toBeInTheDocument();
-    expect(load).toHaveBeenCalledWith(project, { type: "table", title: "Players" });
+    expect(load).toHaveBeenCalledWith(project, { type: "cohort", title: "Players" });
   });
   it("shows the failure of the source in the widget's own cell, titled by the file, with no renderer", async () => {
     load.mockResolvedValue({ ok: false, errors: [{ code: "source_timeout", message: "Too slow", fix: "Speed up" }] });
-    show((await WidgetFrame({ project, widget: { type: "table", title: "Players" } as never })) as ReactElement);
+    show((await WidgetFrame({ project, widget: { type: "cohort", title: "Players" } as never })) as ReactElement);
     expect(screen.getByRole("alert")).toHaveTextContent("source_timeout");
     expect(screen.getByText("Players")).toBeInTheDocument();
     expect(screen.queryByText(/Not drawn yet/)).not.toBeInTheDocument();

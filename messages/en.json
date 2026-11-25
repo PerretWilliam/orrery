@@ -69,6 +69,10 @@
     "trend": "{value} vs previous",
     "alertBelow": "Alert: below {limit}",
     "alertAbove": "Alert: above {limit}",
+    "search": "Search rows",
+    "noMatch": "No row matches your search.",
+    "rows": "{count, plural, one {# row} other {# rows}}",
+    "sortBy": "Sort by {column}",
     "health": {
       "up": "Up",
       "degraded": "Degraded",

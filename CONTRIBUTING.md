@@ -21,7 +21,7 @@ npm run dev
 | `npm run test:integration` | Testcontainers (Postgres) and MSW, needs Docker |
 | `npm run test:e2e` | Playwright against the production build (`npm run build` first) |
 | `npm run mutation` | Stryker, minimum score 90% on sensitive modules |
-| `npm run size` / `npm run lighthouse` | Bundle and Lighthouse budgets (after a build) |
+| `npm run size` / `npm run lighthouse` | Bundle (app shell and per-widget) and Lighthouse budgets (after a build) |
 | `npm run ci:local` | Typecheck, lint, coverage, build and bundle budget |
 
 ## Conventions
