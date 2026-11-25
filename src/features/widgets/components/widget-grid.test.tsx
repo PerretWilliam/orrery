@@ -16,12 +16,13 @@ describe("WidgetGrid", () => {
     show([]);
     expect(screen.getByText("This page has no widgets yet.")).toBeInTheDocument();
   });
-  it("draws one placeholder per widget, titled by the file or by the type, placed from the layout", () => {
+  it("shows a loading card while a widget's code is fetched, then its renderer, placed from the layout", async () => {
     show([{ type: "kpi", title: "<b>Players</b>" }, { type: "markdown" }, { type: "table" }] as never);
-    expect(screen.getAllByRole("listitem")).toHaveLength(3);
-    expect(screen.getByText("<b>Players</b>")).toBeInTheDocument(); // text, not markup
-    expect(screen.getAllByText(/Not drawn yet/)).toHaveLength(3);
+    expect(screen.getAllByLabelText("Loading…").length).toBeGreaterThan(0);
+    expect(await screen.findByText("<b>Players</b>")).toBeInTheDocument(); // text, not markup
+    expect(await screen.findAllByText(/Not drawn yet/)).toHaveLength(3);
     const items = screen.getAllByRole("listitem");
+    expect(items).toHaveLength(3);
     expect(items[0].style.getPropertyValue("--col")).toBe("1 / span 3");
     expect(items[0].style.getPropertyValue("--row")).toBe("1 / span 2");
     expect(items[2].style.getPropertyValue("--col")).toBe("1 / span 12");

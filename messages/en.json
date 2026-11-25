@@ -40,7 +40,8 @@
     "issuePath": "Path",
     "issueFix": "Fix",
     "noWidgets": "This page has no widgets yet.",
-    "widgetSoon": "Not drawn yet"
+    "widgetSoon": "Not drawn yet",
+    "loading": "Loading…"
   },
   "Secrets": {
     "title": "Secrets of {project}",

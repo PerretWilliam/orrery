@@ -17,6 +17,12 @@ const eslintConfig = defineConfig([
       "i18next/no-literal-string": ["error", { mode: "jsx-text-only" }],
     },
   },
+  // Weight: no moment (use Intl / Date) and no whole lodash.
+  {
+    rules: {
+      "no-restricted-imports": ["error", { paths: [{ name: "moment", message: "Use Intl or Date." }, { name: "lodash", message: "Import nothing from lodash: write the two lines." }], patterns: ["lodash/*", "moment/*"] }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
