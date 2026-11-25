@@ -302,6 +302,7 @@ export async function guardedFetch(
   let { method = "GET", headers = {}, body } = init;
   for (let hop = 0; ; hop++) {
     const target = await resolveTarget(current, compiled, deps.resolve);
+    init.signal?.throwIfAborted(); // a request that is already late is never sent
     const response = await deps.send({
       url: target.url,
       address: target.address,
