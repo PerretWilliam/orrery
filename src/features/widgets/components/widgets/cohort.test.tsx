@@ -22,7 +22,7 @@ describe("Cohort", () => {
     for (const day of ["D0", "D1", "D2", "D3"]) expect(screen.getByText(day)).toBeInTheDocument();
     const shaded = container.querySelectorAll("td[style]");
     expect(shaded).toHaveLength(5);
-    expect((shaded[0] as HTMLElement).style.backgroundColor).toContain("var(--primary) 80%");
+    expect((shaded[0] as HTMLElement).style.backgroundColor).toContain("var(--primary) 40%");
   });
   it("draws the matrix without a title when the file gives none", () => {
     show({}, { rows: [{ week: "W1", ret: [0.5] }] });

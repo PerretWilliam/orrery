@@ -15,7 +15,7 @@ export function WidgetGrid({ project, widgets }: { project: WidgetProject; widge
   if (widgets.length === 0) return <p className="text-sm text-muted-foreground">{t("noWidgets")}</p>;
   const placed = layoutFor(widgets.map((widget) => widget.type)).map((item, index) => ({ ...item, widget: widgets.at(index) as Widget }));
   return (
-    <ul className="grid auto-rows-[3.5rem] grid-cols-1 gap-4 md:grid-cols-(--cols)" style={{ "--cols": `repeat(${GRID_COLUMNS}, minmax(0, 1fr))` } as React.CSSProperties}>
+    <ul className="grid auto-rows-[minmax(3.5rem,auto)] grid-cols-1 gap-4 md:grid-cols-(--cols)" style={{ "--cols": `repeat(${GRID_COLUMNS}, minmax(0, 1fr))` } as React.CSSProperties}>
       {placed.map(({ i, x, y, w, h, widget }) => {
         const title = "title" in widget ? widget.title : undefined;
         return (
