@@ -227,6 +227,17 @@ describe("threat: Secret exfiltration through config", () => {
     expect(net.sent).toHaveLength(1);
   });
 
+  it("stops showing what a secret fetched once it is rebound elsewhere or deleted", async () => {
+    const { net, rows, source } = await hub();
+    const yaml = `{ url: 'https://api.example.com/a', ${auth} }`;
+    expect((await source(yaml)).ok).toBe(true);
+    rows[0] = { ...rows[0], boundHosts: ["other.example.com"] };
+    expect(await source(yaml)).toMatchObject({ ok: false, errors: [{ code: "secret_host_not_bound" }] });
+    rows.length = 0;
+    expect(await source(yaml)).toMatchObject({ ok: false, errors: [{ code: "secret_unknown" }] });
+    expect(net.sent).toHaveLength(1);
+  });
+
   it("reads the config from the default branch only: no ref is ever asked for", async () => {
     const privateKey = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString();
     const asked: string[] = [];
