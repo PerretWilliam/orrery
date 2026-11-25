@@ -24,7 +24,9 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserMenu } from "@/features/auth/components/user-menu";
 
-export type ProjectLink = { href: string; title: string; color: string | null; isPrivate: boolean; pages: readonly { href: string; title: string }[]; settingsHref: string | null };
+type Entry = { href: string; title: string };
+/** A page with `lists` unfolds into them instead of being a link. */
+export type ProjectLink = { href: string; title: string; color: string | null; isPrivate: boolean; pages: readonly (Entry & { lists: readonly Entry[] })[]; settingsHref: string | null };
 type Props = { projects: readonly ProjectLink[]; user: { login: string; image?: string | null }; current?: string };
 
 /** lucide has no brand icons. The GitHub mark of Octicons (MIT). */
@@ -48,6 +50,7 @@ export function AppSidebar({ projects, user, current }: Props) {
       </SidebarMenuSubButton>
     </SidebarMenuSubItem>
   );
+  const holdsCurrent = (page: ProjectLink["pages"][number]) => page.href === current || page.lists.some((list) => list.href === current);
   return (
     <Sidebar>
       <SidebarHeader>
@@ -73,7 +76,7 @@ export function AppSidebar({ projects, user, current }: Props) {
                   {projects.map((project) => {
                     const visibility = t(project.isPrivate ? "private" : "public");
                     const Icon = project.isPrivate ? Lock : Eye;
-                    const open = project.settingsHref === current || project.pages.some((page) => page.href === current);
+                    const open = project.settingsHref === current || project.pages.some(holdsCurrent);
                     return (
                       <Collapsible key={project.href} defaultOpen={open} render={<SidebarMenuItem />}>
                         <CollapsibleTrigger render={<SidebarMenuButton className="group/project" />}>
@@ -89,7 +92,21 @@ export function AppSidebar({ projects, user, current }: Props) {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {project.pages.map((page) => entry(page.href, page.title))}
+                            {project.pages.map((page) =>
+                              page.lists.length === 0 ? (
+                                entry(page.href, page.title)
+                              ) : (
+                                <Collapsible key={page.href} defaultOpen={holdsCurrent(page)} render={<SidebarMenuSubItem />}>
+                                  <CollapsibleTrigger render={<SidebarMenuSubButton className="group/page w-full [&>svg]:text-sidebar-foreground" render={<button type="button" />} />}>
+                                    <span className="truncate">{page.title}</span>
+                                    <ChevronRight aria-hidden className="ml-auto transition-transform group-data-panel-open/page:rotate-90" />
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                    <SidebarMenuSub>{page.lists.map((list) => entry(list.href, list.title))}</SidebarMenuSub>
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              ),
+                            )}
                             {project.settingsHref ? entry(project.settingsHref, t("settings")) : null}
                           </SidebarMenuSub>
                         </CollapsibleContent>

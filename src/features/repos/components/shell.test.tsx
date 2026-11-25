@@ -93,6 +93,32 @@ describe("AppShell", () => {
     expect(projects().getByRole("link", { name: "Overview" })).toHaveAttribute("href", "/p/acme/web");
     expect(projects().getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
   });
+  it("unfolds a page of GitHub lists into one link per list, titled by the file or by the kind, as text", async () => {
+    const activity = ConfigV1.parse({
+      version: 1,
+      project: { name: "Starfall" },
+      pages: [{ id: "activity", title: "Activity", widgets: [{ type: "github.issues" }, { type: "github.pull_requests", title: "<b>Reviews</b>" }] }],
+    });
+    const view = show(
+      <AppShell viewer={viewer} projects={[project({ config: activity })]} current="/p/acme/web/activity/issues">
+        x
+      </AppShell>,
+    );
+    expect(projects().getByRole("button", { name: "Activity" })).toHaveAttribute("aria-expanded", "true");
+    expect(projects().queryByRole("link", { name: "Activity" })).toBeNull();
+    expect(projects().getByRole("link", { name: "Issues" })).toHaveAttribute("aria-current", "page");
+    expect(projects().getByRole("link", { name: "<b>Reviews</b>" })).toHaveAttribute("href", "/p/acme/web/activity/pull-requests");
+    view.unmount();
+    show(
+      <AppShell viewer={viewer} projects={[project({ config: activity })]}>
+        x
+      </AppShell>,
+    );
+    unfold(/Starfall/);
+    expect(await projects().findByRole("button", { name: "Activity" })).toHaveAttribute("aria-expanded", "false");
+    unfold(/^Activity$/);
+    expect(await projects().findByRole("link", { name: "Issues" })).toBeInTheDocument();
+  });
   it("names the visibility in a tooltip on hover", async () => {
     show(
       <AppShell viewer={viewer} projects={[project({ isPrivate: true })]}>
@@ -160,6 +186,10 @@ describe("ProjectView", () => {
     expect(screen.getByText("Archived")).toBeInTheDocument();
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+  it("shows only the list asked for, outside the grid", () => {
+    show(<ProjectView project={project()} page={config.pages[1]} list={config.pages[1].widgets[0]} />);
+    expect(screen.getByRole("list")).toHaveAttribute("data-layout", "single");
   });
   it("has no badge for an active project", () => {
     show(<ProjectView project={project()} page={config.pages[0]} />);

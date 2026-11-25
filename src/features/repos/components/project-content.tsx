@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { currentViewer } from "@/features/auth/server/runtime";
+import { listsOf } from "@/features/widgets/domain/lists";
 import { pickPage, projectPath } from "../domain/project";
 import { getProjects } from "../server/runtime";
 import { AppShell } from "./app-shell";
@@ -9,10 +10,10 @@ import { RememberLocation } from "./remember-location";
 
 type Params = Promise<{ owner: string; repo: string; page?: string[] }>;
 
-/** `/p/<owner>/<repo>/<page?>`. A project that does not exist and one the user may not see are the same 404. */
+/** `/p/<owner>/<repo>/<page?>/<list?>`. A project that does not exist and one the user may not see are the same 404. */
 export async function ProjectContent({ params }: { params: Params }) {
   const { owner, repo, page: segments = [] } = await params;
-  if (segments.length > 1) notFound();
+  if (segments.length > 2) notFound();
   const viewer = await currentViewer(await headers());
   if (!viewer) redirect("/sign-in");
 
@@ -21,11 +22,14 @@ export async function ProjectContent({ params }: { params: Params }) {
   if (!project) notFound();
   const page = project.config ? pickPage(project.config.pages, segments[0]) : null;
   if (segments[0] !== undefined && !page) notFound();
+  const lists = page ? listsOf(page.widgets) : [];
+  const list = segments[1] === undefined ? lists[0] : lists.find(({ id }) => id === segments[1]);
+  if (segments[1] !== undefined && !list) notFound();
 
   return (
-    <AppShell viewer={viewer} projects={await projects.visibleTo(viewer.login)} current={projectPath(project, page?.id)}>
-      <ProjectView project={project} page={page} />
-      <RememberLocation place={{ owner: project.owner, name: project.name, page: page?.id ?? null }} />
+    <AppShell viewer={viewer} projects={await projects.visibleTo(viewer.login)} current={projectPath(project, page?.id, list?.id)}>
+      <ProjectView project={project} page={page} list={list?.widget} />
+      <RememberLocation place={{ owner: project.owner, name: project.name, page: page?.id ?? null, list: list?.id }} />
     </AppShell>
   );
 }

@@ -25,12 +25,13 @@ describe("widget states", () => {
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.getByText("<b>Players</b>")).toBeInTheDocument();
     expect(screen.getByText("source_timeout")).toBeInTheDocument();
-    expect(screen.getByText(/Too slow\. Fix: Speed up/)).toBeInTheDocument();
+    expect(screen.getByText("Too slow")).toBeInTheDocument();
+    expect(screen.getByText("Speed up")).toHaveTextContent("Fix Speed up");
     expect(screen.getByText("secret_unknown")).toBeInTheDocument();
   });
   it("error without a title falls back to the generic heading", () => {
     show(<WidgetError errors={[]} />);
-    expect(screen.getAllByText("This widget could not load its data")).toHaveLength(2);
+    expect(screen.getByText("This widget could not load its data")).toBeInTheDocument();
   });
   it("crashed gives no detail, with or without a title", () => {
     show(<WidgetCrashed title="Players" />);

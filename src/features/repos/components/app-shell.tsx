@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Viewer } from "@/features/auth/domain/profile";
 import { settingsPath } from "@/features/project-settings/domain/hosts";
+import { listsOf } from "@/features/widgets/domain/lists";
 import { projectPath } from "../domain/project";
 import type { ListedProject } from "../server/projects";
 import { AppSidebar } from "./app-sidebar";
@@ -20,7 +21,11 @@ export function AppShell({ viewer, projects, current, children }: Props) {
     color: project.color,
     isPrivate: project.isPrivate,
     // A project whose config has never been valid still needs a way to its page, where the problems are shown.
-    pages: project.config?.pages.map((page) => ({ href: projectPath(project, page.id), title: page.title })) ?? [{ href: projectPath(project), title: t("overview") }],
+    pages: project.config?.pages.map((page) => ({
+      href: projectPath(project, page.id),
+      title: page.title,
+      lists: listsOf(page.widgets).map(({ id, kind, widget }) => ({ href: projectPath(project, page.id, id), title: ("title" in widget ? widget.title : undefined) ?? t(`lists.${kind}`) })),
+    })) ?? [{ href: projectPath(project), title: t("overview"), lists: [] }],
     settingsHref: project.canManage ? settingsPath(project) : null,
   }));
   return (

@@ -34,7 +34,7 @@ const project = (name: string, pages: string[] = ["overview", "ops"]) => ({
   name,
   title: name,
   color: null,
-  config: { pages: pages.map((id) => ({ id })) },
+  config: { pages: pages.map((id) => ({ id, widgets: id === "activity" ? [{ type: "github.issues" }, { type: "github.releases" }] : [] })) },
 });
 const open = async () => {
   try {
@@ -79,6 +79,15 @@ describe("HomeContent", () => {
   it("goes back to the project and page the user left, when they can still see them", async () => {
     cookieValue.mockReturnValue(encodeURIComponent("/p/acme/api/ops"));
     expect(await open()).toBe("redirect:/p/acme/api/ops");
+  });
+  it("goes back to the list the user left, and to its page when the list is gone", async () => {
+    visibleTo.mockResolvedValue([project("web", ["overview", "activity"])]);
+    cookieValue.mockReturnValue(encodeURIComponent("/p/acme/web/activity/releases"));
+    expect(await open()).toBe("redirect:/p/acme/web/activity/releases");
+    cookieValue.mockReturnValue(encodeURIComponent("/p/acme/web/activity/vanished"));
+    expect(await open()).toBe("redirect:/p/acme/web/activity");
+    cookieValue.mockReturnValue(encodeURIComponent("/p/acme/web/vanished/releases"));
+    expect(await open()).toBe("redirect:/p/acme/web");
   });
   it("drops a remembered page that is gone, and keeps the project", async () => {
     cookieValue.mockReturnValue(encodeURIComponent("/p/acme/api/vanished"));

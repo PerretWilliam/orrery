@@ -84,6 +84,8 @@ pages:
       - { type: github.workflow_runs, branch: main }
 ```
 
+A page made only of GitHub lists (two or more) unfolds in the sidebar and shows one list at a time.
+
 Add a data source of your own (an internal API, a status endpoint) and show it:
 
 ```yaml

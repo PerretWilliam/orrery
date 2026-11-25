@@ -59,6 +59,8 @@ GitHub activity badges:
 
 Badges from a source's own data (a `badge` table column) stay violet: the hub does not know what their words mean. A trend arrow stays neutral for the same reason: the hub does not know whether up is good.
 
+A widget that failed is a card with a `destructive` outline and wash, an icon, then what happened, how to fix it and the stable code. A widget with nothing to show stays neutral.
+
 ## Logo
 
 [`src/app/icon.svg`](../src/app/icon.svg): a white orbit on the light-mode `primary` (`#6a3cf0`), the same in both modes. A project colour never changes it.

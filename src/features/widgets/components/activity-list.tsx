@@ -18,7 +18,7 @@ export function ActivityList({ title, data }: { title: string | undefined; data:
           <CardTitle>{title}</CardTitle>
         </CardHeader>
       ) : null}
-      <CardContent className="min-h-0 flex-1 overflow-auto md:[contain:size]">
+      <CardContent className="min-h-0 flex-1 overflow-auto md:in-data-[layout=grid]:[contain:size]">
         <ul className="flex flex-col divide-y text-sm">
           {items.map((item, index) => {
             const href = safeGithubUrl(item.url);

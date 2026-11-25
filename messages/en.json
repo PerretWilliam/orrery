@@ -51,7 +51,13 @@
     "sidebarTitle": "Sidebar",
     "sidebarBody": "Projects and your account.",
     "sidebarToggle": "Toggle sidebar",
-    "overview": "Overview"
+    "overview": "Overview",
+    "lists": {
+      "issues": "Issues",
+      "pull_requests": "Pull requests",
+      "workflow_runs": "Workflow runs",
+      "releases": "Releases"
+    }
   },
   "Secrets": {
     "title": "Secrets of {project}",

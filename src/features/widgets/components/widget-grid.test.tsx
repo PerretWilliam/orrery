@@ -17,10 +17,10 @@ vi.mock("./widget-frame", () => ({
 import { WidgetGrid } from "./widget-grid";
 
 const config = ConfigV1.parse({ version: 1, project: { name: "S" }, pages: [{ id: "o", title: "O", widgets: [] }] });
-const show = (widgets: Parameters<typeof WidgetGrid>[0]["widgets"]) =>
+const show = (widgets: Parameters<typeof WidgetGrid>[0]["widgets"], single?: boolean) =>
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <WidgetGrid project={{ id: "r1", owner: "acme", name: "web", config }} widgets={widgets} />
+      <WidgetGrid project={{ id: "r1", owner: "acme", name: "web", config }} widgets={widgets} single={single} />
     </NextIntlClientProvider>,
   );
 
@@ -42,6 +42,12 @@ describe("WidgetGrid", () => {
     expect(items[0].style.getPropertyValue("--col")).toBe("1 / span 3");
     expect(items[0].style.getPropertyValue("--row")).toBe("1 / span 2");
     expect(items[2].style.getPropertyValue("--col")).toBe("1 / span 12");
+  });
+  it("shows a single widget outside the grid", async () => {
+    show([{ type: "github.issues" }] as never, true);
+    expect(await screen.findByText("frame github.issues")).toBeInTheDocument();
+    expect(screen.getByRole("list")).toHaveAttribute("data-layout", "single");
+    expect(screen.getByRole("listitem").className).not.toContain("--col");
   });
   it("keeps a widget that crashes in its own cell, titled by the file, and the others drawn", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});

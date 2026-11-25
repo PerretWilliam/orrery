@@ -30,6 +30,7 @@ const config = ConfigV1.parse({
   pages: [
     { id: "overview", title: "Overview", widgets: [] },
     { id: "ops", title: "Ops", widgets: [] },
+    { id: "activity", title: "Activity", widgets: [{ type: "github.issues" }, { type: "github.releases", title: "<img src=x>" }] },
   ],
 });
 const project = (over = {}) => ({ owner: "acme", name: "web", isPrivate: false, archived: false, title: "Starfall", color: null, config, issues: [], ...over });
@@ -84,6 +85,20 @@ describe("ProjectContent", () => {
     open.mockResolvedValue(project({ config: null, issues: [{ code: "config_syntax", path: "$", message: "bad", fix: "fix" }] }));
     show((await ProjectContent({ params: params() })) as ReactElement);
     expect(screen.getByText("Nothing can be shown until they are fixed.")).toBeInTheDocument();
+  });
+  it("shows the first list of a page of lists by default, and the one asked for", async () => {
+    const view = show((await ProjectContent({ params: params(["activity"]) })) as ReactElement);
+    expect(screen.getByRole("link", { name: "Issues" })).toHaveAttribute("aria-current", "page");
+    view.unmount();
+    const { container } = show((await ProjectContent({ params: params(["activity", "releases"]) })) as ReactElement);
+    // A list's title comes from the repository: text, never markup.
+    expect(screen.getByRole("link", { name: "<img src=x>" })).toHaveAttribute("aria-current", "page");
+    expect(container.querySelector("img[src=x]")).toBeNull();
+  });
+  it("is a 404 for an unknown list, a list under a page that has none, and a path deeper than a list", async () => {
+    expect(await outcome(["activity", "nope"])).toBe("404");
+    expect(await outcome(["ops", "issues"])).toBe("404");
+    expect(await outcome(["activity", "issues", "x"])).toBe("404");
   });
   it("lists the project's settings in the sidebar for a user who manages it, and only for them", async () => {
     show((await ProjectContent({ params: params() })) as ReactElement).unmount();

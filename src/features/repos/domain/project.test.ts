@@ -5,6 +5,7 @@ describe("projectPath", () => {
   it("builds the URL of a project, and of one of its pages", () => {
     expect(projectPath({ owner: "acme", name: "web" })).toBe("/p/acme/web");
     expect(projectPath({ owner: "acme", name: "web" }, "overview")).toBe("/p/acme/web/overview");
+    expect(projectPath({ owner: "acme", name: "web" }, "activity", "issues")).toBe("/p/acme/web/activity/issues");
   });
   it("encodes what it puts in the path", () => {
     expect(projectPath({ owner: "a/b", name: "c d" }, "x?y")).toBe("/p/a%2Fb/c%20d/x%3Fy");
@@ -15,6 +16,7 @@ describe("parsePlace", () => {
   it("reads a project and a page", () => {
     expect(parsePlace("/p/acme/web")).toEqual({ owner: "acme", name: "web", page: null });
     expect(parsePlace("/p/Acme/my.repo_1/overview-2")).toEqual({ owner: "Acme", name: "my.repo_1", page: "overview-2" });
+    expect(parsePlace("/p/acme/web/activity/issues")).toEqual({ owner: "acme", name: "web", page: "activity", list: "issues" });
   });
   it.each([
     [undefined],
@@ -23,7 +25,8 @@ describe("parsePlace", () => {
     ["/p/acme"],
     ["/p/acme/web/"],
     ["/p/acme/web/Overview"],
-    ["/p/acme/web/a/b"],
+    ["/p/acme/web/a/b/c"],
+    ["/p/acme/web/a/B"],
     ["/x/acme/web"],
     ["//evil.test/p/acme/web"],
     ["/p/ac me/web"],
@@ -43,7 +46,7 @@ describe("parsePlace", () => {
 
 describe("the cookie", () => {
   it("round-trips a place", () => {
-    for (const place of [{ owner: "acme", name: "web", page: null }, { owner: "acme", name: "web", page: "ops" }]) {
+    for (const place of [{ owner: "acme", name: "web", page: null }, { owner: "acme", name: "web", page: "ops" }, { owner: "acme", name: "web", page: "ops", list: "issues" }]) {
       expect(placeFromCookie(cookieValueFor(place))).toEqual(place);
     }
   });

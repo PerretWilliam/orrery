@@ -8,6 +8,10 @@ describe("RememberLocation", () => {
     expect(container).toBeEmptyDOMElement();
     expect(document.cookie).toContain("orrery_last=%2Fp%2Facme%2Fweb%2Fops");
   });
+  it("remembers the list of a page too", () => {
+    render(<RememberLocation place={{ owner: "acme", name: "web", page: "activity", list: "issues" }} />);
+    expect(document.cookie).toContain("orrery_last=%2Fp%2Facme%2Fweb%2Factivity%2Fissues");
+  });
   it("adds the Secure attribute over HTTPS", () => {
     const writes: string[] = [];
     const original = Object.getOwnPropertyDescriptor(Document.prototype, "cookie");

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { currentViewer } from "@/features/auth/server/runtime";
 import { getSetupService } from "@/features/setup/server/runtime";
+import { listsOf } from "@/features/widgets/domain/lists";
 import { LAST_PAGE_COOKIE, pickPage, placeFromCookie, projectPath, sameRepo } from "../domain/project";
 import { getProjects } from "../server/runtime";
 import { AppShell, EmptyProjects } from "./app-shell";
@@ -31,7 +32,8 @@ export async function HomeContent() {
   const last = place && projects.find((project) => sameRepo(project, place));
   if (last && place) {
     const page = last.config && place.page ? pickPage(last.config.pages, place.page) : null;
-    redirect(projectPath(last, page?.id));
+    const list = page && listsOf(page.widgets).find(({ id }) => id === place.list);
+    redirect(projectPath(last, page?.id, list?.id));
   }
   if (projects[0]) redirect(projectPath(projects[0]));
   return (
