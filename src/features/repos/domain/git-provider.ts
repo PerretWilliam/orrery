@@ -1,3 +1,5 @@
+import type { ActivityRequest, ActivityResult } from "./activity";
+
 /**
  * Provider-agnostic access to a Git host. GitHub is the only implementation in V1
  * (Octokit adapter lives in features/repos/server); GitLab arrives in V3.
@@ -36,4 +38,6 @@ export interface GitProviderInterface {
   isTeamMember(org: string, teamSlug: string, login: string): Promise<boolean>;
   /** File at the root of the default branch. With `etag`, an unchanged file is reported as such instead of being sent again. */
   getFile(repo: RepoRef, path: string, etag?: string): Promise<FileResult>;
+  /** Issues, pull requests, workflow runs or releases of a repository, newest change first. With `etag`, an unchanged list is reported as such. Throws when the host cannot answer. */
+  getActivity(repo: RepoRef, request: ActivityRequest, etag?: string): Promise<ActivityResult>;
 }

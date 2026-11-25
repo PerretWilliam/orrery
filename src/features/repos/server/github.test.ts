@@ -306,3 +306,31 @@ describe("getFile", () => {
     expect(seen.filter((s) => s.url.endsWith("/contents/.hub.yml"))).toHaveLength(4);
   });
 });
+
+describe("getActivity", () => {
+  const request = { kind: "releases", limit: 5 } as const;
+  const url = "GET /repos/acme/web/releases?per_page=5";
+  const routes = (answer: (seen: Seen) => Response) => ({ ...installationOfRepo, ...tokenFor(7), [url]: answer });
+  const release = { tag_name: "v1", name: "One", html_url: "https://github.com/acme/web/releases/v1", published_at: "2026-05-01T00:00:00Z" };
+
+  it("returns the items and the ETag of the list", async () => {
+    const { provider } = setup(routes(() => json([release], { headers: { etag: 'W/"r1"' } })));
+    expect(await provider.getActivity(repo, request)).toEqual({
+      kind: "found",
+      etag: 'W/"r1"',
+      items: [{ key: "v1", title: "One", state: "released", by: null, url: "https://github.com/acme/web/releases/v1", at: "2026-05-01T00:00:00Z" }],
+    });
+  });
+  it("sends the ETag it has, reports an unchanged list, and tolerates an answer without ETag", async () => {
+    const same = setup(routes(() => status(304)));
+    expect(await same.provider.getActivity(repo, request, 'W/"r1"')).toEqual({ kind: "unchanged" });
+    expect(same.seen.at(-1)!.headers.get("if-none-match")).toBe('W/"r1"');
+    const bare = setup(routes(() => json([])));
+    expect(await bare.provider.getActivity(repo, request)).toEqual({ kind: "found", items: [], etag: "" });
+    expect(bare.seen.at(-1)!.headers.has("if-none-match")).toBe(false);
+  });
+  it("throws when GitHub cannot answer or sends the wrong shape", async () => {
+    await expect(setup(routes(() => status(403))).provider.getActivity(repo, request)).rejects.toThrow("403");
+    await expect(setup(routes(() => json({ not: "a list" }))).provider.getActivity(repo, request)).rejects.toThrow();
+  });
+});

@@ -17,10 +17,10 @@ describe("widget registry", () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <Suspense fallback="wait">
-          <WidgetRenderer widget={{ type: "github.issues" } as never} data={null} />
+          <WidgetRenderer widget={{ type: "markdown", content: "hello" } as never} data={null} />
         </Suspense>
       </NextIntlClientProvider>,
     );
-    expect(await screen.findByText("github.issues · Not drawn yet")).toBeInTheDocument();
+    expect(await screen.findByText("hello")).toBeInTheDocument();
   });
 });

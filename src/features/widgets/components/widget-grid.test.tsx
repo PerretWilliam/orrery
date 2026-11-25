@@ -20,7 +20,7 @@ const config = ConfigV1.parse({ version: 1, project: { name: "S" }, pages: [{ id
 const show = (widgets: Parameters<typeof WidgetGrid>[0]["widgets"]) =>
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <WidgetGrid project={{ id: "r1", config }} widgets={widgets} />
+      <WidgetGrid project={{ id: "r1", owner: "acme", name: "web", config }} widgets={widgets} />
     </NextIntlClientProvider>,
   );
 
