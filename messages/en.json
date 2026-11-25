@@ -40,8 +40,7 @@
     "issuePath": "Path",
     "issueFix": "Fix",
     "noWidgets": "This page has no widgets yet.",
-    "widgetSoon": "Not drawn yet",
-    "loading": "Loading…"
+    "widgetSoon": "Not drawn yet"
   },
   "Secrets": {
     "title": "Secrets of {project}",
@@ -58,5 +57,14 @@
     "value": "Value",
     "hostsLabel": "Hosts (separated by spaces or commas)",
     "save": "Save"
+  },
+  "Widgets": {
+    "loading": "Loading…",
+    "empty": "Nothing to show yet.",
+    "errorTitle": "This widget could not load its data",
+    "fix": "Fix",
+    "crashed": "This widget could not be drawn.",
+    "updated": "Updated {when}",
+    "refreshing": "Updated {when}, refreshing"
   }
 }

@@ -1,5 +1,5 @@
 import { lazy, type ComponentType } from "react";
-import type { Widget, WidgetProps, WidgetType } from "../domain/types";
+import type { AnyWidgetProps, WidgetProps, WidgetType } from "../domain/types";
 
 type Loaders = { readonly [T in WidgetType]: () => Promise<{ default: ComponentType<WidgetProps<T>> }> };
 
@@ -26,6 +26,10 @@ export const LOADERS: Loaders = {
 
 // One lazy component per type, created once: the loader runs the first time a widget of this type is drawn.
 // The cast is the one place the per-type props are widened: `widget` is always of the type its loader was picked by.
-const COMPONENTS = new Map(Object.entries(LOADERS).map(([type, load]) => [type, lazy(load as () => Promise<{ default: ComponentType<{ widget: Widget }> }>)]));
+const COMPONENTS = new Map(Object.entries(LOADERS).map(([type, load]) => [type, lazy(load as () => Promise<{ default: ComponentType<AnyWidgetProps> }>)]));
 
-export const widgetComponent = (type: WidgetType): ComponentType<{ widget: Widget }> => COMPONENTS.get(type) as ComponentType<{ widget: Widget }>;
+/** Draws a widget with the component of its type. A component, not a lookup function, so the page never creates one while rendering. */
+export function WidgetRenderer(props: AnyWidgetProps) {
+  const Component = COMPONENTS.get(props.widget.type) as ComponentType<AnyWidgetProps>;
+  return <Component {...props} />;
+}

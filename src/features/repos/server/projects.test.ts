@@ -8,6 +8,7 @@ const config = (name: string, color?: string) => ({
   pages: [{ id: "overview", title: "Overview", widgets: [] }],
 });
 const row = (name: string, over: Partial<ProjectRow> = {}): ProjectRow => ({
+  id: `id-${name}`,
   owner: "acme",
   name,
   isPrivate: false,
@@ -39,7 +40,7 @@ describe("visibleTo", () => {
   it("falls back to the repository name, without color, when the file was never valid", async () => {
     const { projects } = setup([row("web", { config: null, issues: [{ code: "config_syntax", path: "$", message: "bad", fix: "fix" }] })], ["web"]);
     const [project] = await projects.visibleTo("octo");
-    expect(project).toMatchObject({ title: "web", color: null, config: null });
+    expect(project).toMatchObject({ id: "id-web", title: "web", color: null, config: null });
     expect(project.issues).toHaveLength(1);
   });
   it("does not trust a stored config that no longer parses", async () => {

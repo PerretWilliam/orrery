@@ -17,6 +17,7 @@ import type { AccessStore } from "./store";
 const privateKey = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString();
 
 const row = (name: string, isPrivate: boolean): ProjectRow => ({
+  id: `id-${name}`,
   owner: "acme",
   name,
   isPrivate,

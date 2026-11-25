@@ -4,6 +4,7 @@ import type { RepoRef } from "../domain/git-provider";
 
 /** A repository as the shell needs it. `config` is as stored (jsonb): it is checked again before use. */
 export type ProjectRow = {
+  id: string;
   owner: string;
   name: string;
   isPrivate: boolean;
@@ -19,6 +20,7 @@ export type ProjectStore = {
 };
 
 export type Project = {
+  id: string;
   owner: string;
   name: string;
   isPrivate: boolean;
@@ -34,6 +36,7 @@ function toProject(row: ProjectRow): Project {
   const parsed = ConfigV1.safeParse(row.config);
   const config = parsed.success ? parsed.data : null;
   return {
+    id: row.id,
     owner: row.owner,
     name: row.name,
     isPrivate: row.isPrivate,

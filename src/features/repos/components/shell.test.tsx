@@ -23,7 +23,7 @@ const config = ConfigV1.parse({
     { id: "ops", title: "Ops", widgets: [{ type: "markdown", content: "hi" }] },
   ],
 });
-const project = (over: Partial<Project> = {}): Project => ({ owner: "acme", name: "web", isPrivate: false, archived: false, title: "Starfall", color: null, config, issues: [], ...over });
+const project = (over: Partial<Project> = {}): Project => ({ id: "r1", owner: "acme", name: "web", isPrivate: false, archived: false, title: "Starfall", color: null, config, issues: [], ...over });
 
 describe("AppShell", () => {
   it("links to the visible projects, marks the current one and offers sign-out", () => {

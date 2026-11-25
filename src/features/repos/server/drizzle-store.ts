@@ -94,6 +94,7 @@ export function createRepoStore(db: Db): RepoStore {
 }
 
 const project = (row: Row): ProjectRow => ({
+  id: row.id,
   owner: row.owner,
   name: row.name,
   isPrivate: row.isPrivate,
