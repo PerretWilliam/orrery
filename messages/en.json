@@ -69,6 +69,8 @@
     "trend": "{value} vs previous",
     "alertBelow": "Alert: below {limit}",
     "alertAbove": "Alert: above {limit}",
+    "cohort": "Cohort",
+    "day": "D{day}",
     "search": "Search rows",
     "noMatch": "No row matches your search.",
     "rows": "{count, plural, one {# row} other {# rows}}",
