@@ -1,0 +1,35 @@
+# Reference deployment: Orrery and its PostgreSQL. Copy .env.example to .env and fill it in, then `docker compose up -d`.
+services:
+  orrery:
+    image: ghcr.io/perretwilliam/orrery:latest # pin a version in production, for example :0.2.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://orrery:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/orrery
+      ORRERY_ENCRYPTION_KEYS: ${ORRERY_ENCRYPTION_KEYS:?set ORRERY_ENCRYPTION_KEYS}
+      ORRERY_PUBLIC_URL: ${ORRERY_PUBLIC_URL:-}
+      ORRERY_SETUP_TOKEN: ${ORRERY_SETUP_TOKEN:-}
+      ORRERY_ADMINS: ${ORRERY_ADMINS:-}
+      ORRERY_SIGNIN_ALLOWLIST: ${ORRERY_SIGNIN_ALLOWLIST:-}
+    ports:
+      - "3000:3000" # put a TLS reverse proxy in front of it
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: orrery
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: orrery
+    volumes:
+      - orrery-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orrery -d orrery"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  orrery-db:

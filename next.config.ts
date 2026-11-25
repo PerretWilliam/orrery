@@ -5,6 +5,7 @@ import { CONTENT_SECURITY_POLICY } from "./src/lib/csp";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
