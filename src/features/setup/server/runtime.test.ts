@@ -5,6 +5,8 @@ const createSetupStore = vi.fn(() => ({ isCompleted: async () => false }));
 const runMigrations = vi.fn(async () => undefined);
 const startDiscovery = vi.fn();
 vi.mock("@/features/repos/server/runtime", () => ({ startDiscovery: () => startDiscovery() }));
+const startCachePurgeJob = vi.fn();
+vi.mock("@/features/data-proxy/server/runtime", () => ({ startCachePurgeJob: () => startCachePurgeJob() }));
 vi.mock("./drizzle-store", () => ({ createSetupStore: (...a: unknown[]) => createSetupStore(...(a as [])) }));
 vi.mock("@/lib/db/instance", () => ({ getDb: () => "db-handle" }));
 vi.mock("@/lib/db/migrate", () => ({ runMigrations: (...a: unknown[]) => runMigrations(...(a as [])) }));
@@ -14,6 +16,7 @@ import { startInstance } from "./start";
 
 afterEach(() => {
   startDiscovery.mockClear();
+  startCachePurgeJob.mockClear();
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
   Reflect.deleteProperty(globalThis, Symbol.for("orrery.setupToken"));
@@ -59,6 +62,7 @@ describe("startInstance", () => {
     expect(runMigrations).toHaveBeenCalledWith("db-handle");
     expect(out.mock.calls.join("")).toContain("/setup");
     expect(startDiscovery).toHaveBeenCalledTimes(1);
+    expect(startCachePurgeJob).toHaveBeenCalledTimes(1);
   });
   it("does nothing without a database", async () => {
     vi.stubEnv("DATABASE_URL", "");

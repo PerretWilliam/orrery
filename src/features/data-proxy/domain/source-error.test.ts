@@ -9,6 +9,7 @@ describe("SOURCE_ERRORS", () => {
       "source_too_large",
       "source_timeout",
       "source_invalid_json",
+      "source_internal",
       "source_unreachable",
     ]);
   });

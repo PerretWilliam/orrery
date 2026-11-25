@@ -23,6 +23,10 @@ export const SOURCE_ERRORS = {
     message: "The source answer is not valid JSON",
     fix: "Make the source return a well-formed JSON document, uncompressed and encoded in UTF-8.",
   },
+  source_internal: {
+    message: "Orrery could not prepare the request to the source",
+    fix: "Try again in a moment. If it keeps failing, ask the instance admin to check the server logs.",
+  },
   source_unreachable: {
     message: "The source could not be reached",
     fix: "Check the URL, the network path and the TLS certificate of the source.",
