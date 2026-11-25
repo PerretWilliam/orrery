@@ -102,7 +102,7 @@ const Kpi = z.strictObject({
   alert: field(Alert.optional(), "Only changes the color and icon of the widget; never sends a notification.", { below: 18 }),
 });
 
-const series = (type: "line" | "bar") =>
+const series = <T extends "line" | "bar">(type: T) =>
   z.strictObject({
     type: field(z.literal(type), `Chart of type ${type}.`, type),
     title,
