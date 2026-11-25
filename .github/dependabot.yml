@@ -7,6 +7,13 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # The types follow the Node major the app runs on (.nvmrc, Dockerfile, engines): raise them together, by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint refuses TypeScript 7 and Stryker cannot run on it. Remove once both support it.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
