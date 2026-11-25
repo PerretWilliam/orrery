@@ -31,6 +31,9 @@ export function AppShell({ projects, current, children }: { projects: readonly P
             );
           })}
         </nav>
+        <Link href="/account/tokens" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+          {t("tokens")}
+        </Link>
         <ThemeToggle />
         <form method="post" action="/auth/sign-out">
           <button type="submit" className={buttonVariants({ variant: "outline", size: "sm" })}>
