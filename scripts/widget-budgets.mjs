@@ -1,6 +1,6 @@
 // Weight of each widget: bundles every file of src/features/widgets/components/widgets/ on its own (the shell,
 // React and Next are shared and left out), then checks its gzip size and that no banned library came in.
-// Budgets in KB (gzip), to review after the first measure: 50 per widget, 100 for charts.
+// Budgets in KB (gzip): 50 per widget, 120 for charts (recharts 3.11 weighs up to 114).
 import { build } from "esbuild";
 import { readdirSync } from "node:fs";
 import { gzipSync } from "node:zlib";
@@ -18,7 +18,7 @@ for (const file of readdirSync(DIR).filter((name) => /\.tsx?$/.test(name) && !na
     jsx: "automatic", external: SHARED, logLevel: "error", define: { "process.env.NODE_ENV": '"production"' },
   });
   const kb = gzipSync(result.outputFiles[0].contents).length / 1024;
-  const budget = CHARTS.has(name) ? 100 : 50;
+  const budget = CHARTS.has(name) ? 120 : 50;
   const banned = Object.keys(result.metafile.inputs).filter((path) => BANNED.test(path));
   const ok = kb <= budget && banned.length === 0;
   failed ||= !ok;

@@ -206,7 +206,7 @@ A tab must show useful content from cache in under 1 second, and no slow or brok
 | Failure isolation | 3 s timeout per source | One request per widget with its own `Suspense` boundary; an error state replaces only that widget |
 | Outbound load | One request per source, however many viewers | Request coalescing and per-source TTL; `ETag` conditional requests to GitHub |
 | Large data | Smooth with thousands of rows or points | TanStack Virtual for tables; uPlot available as a heavy time-series widget behind the same registry |
-| Bundle | 200 kB gzipped first-load JS per route; 50 kB per lazy widget chunk, 100 kB for chart widgets (initial values, revisited after the first baseline) | Widget code loaded lazily through the registry; no moment or full lodash; React Compiler |
+| Bundle | 200 kB gzipped first-load JS per route; 50 kB per lazy widget chunk, 120 kB for chart widgets (raised from 100 kB for recharts 3.11) | Widget code loaded lazily through the registry; no moment or full lodash; React Compiler |
 | Audit | Lighthouse performance score of 90 or more on the sign-in page and a 10-widget tab | Lighthouse CI on every pull request |
 
 Database indexes are designed with the schema, not added after the first slow query.
