@@ -76,7 +76,9 @@ A form that worked says so in a toast (bottom right, [Ding](https://ding.yusufce
 
 ## Loading
 
-What is the same on every visit is drawn at once (the brand, the sign-in panel, the sidebar once loaded). The rest is a skeleton shaped like what is coming, in the same place: never an empty screen. The sidebar stays while pages change.
+What is the same on every visit is drawn at once (the sign-in panel, the sidebar once loaded). The rest is a skeleton shaped like what is coming, in the same place: never an empty screen. The sidebar stays while pages change.
+
+The very first load of a signed-in screen is blocks only, brand included: a word or an image painted ahead of the page makes the page count as late (Lighthouse budget in CI).
 
 ## Contrast
 

@@ -13,4 +13,14 @@ describe("skeletons", () => {
     );
     expect(screen.getByRole("status", { name: "Loading…" })).toHaveAttribute("aria-busy", "true");
   });
+
+  it("draws no word and no image before the first page, which would be painted ahead of it", () => {
+    const { container } = render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ShellSkeleton />
+      </NextIntlClientProvider>,
+    );
+    expect(container.textContent).toBe("");
+    expect(container.querySelector("img")).toBeNull();
+  });
 });

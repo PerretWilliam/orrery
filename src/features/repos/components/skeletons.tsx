@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,15 +67,17 @@ export function CenteredSkeleton() {
   );
 }
 
-/** The whole signed-in screen on its first load: the brand where it will stay, and blocks where the rest will appear. */
+/**
+ * The whole signed-in screen on its first load, blocks only. A word or an image here is painted well before the page,
+ * and Lighthouse then counts the page as late: the CI budget of a tab failed on it.
+ */
 export function ShellSkeleton() {
-  const t = useTranslations("Shell");
   return (
     <div className="flex min-h-svh w-full flex-col md:flex-row">
       <div className="hidden w-64 shrink-0 flex-col gap-4 border-r bg-card p-4 md:flex">
         <div className="flex items-center gap-2">
-          <Image src="/icon.svg" alt="" width={32} height={32} />
-          <span className="text-base font-semibold tracking-tight">{t("brand")}</span>
+          <Skeleton className="size-8" />
+          <Skeleton className="h-5 w-20" />
         </div>
         <Skeleton className="mt-4 h-4 w-20" />
         <Skeleton className="h-5 w-full" />
@@ -86,7 +87,9 @@ export function ShellSkeleton() {
           <Skeleton className="h-4 w-24" />
         </div>
       </div>
-      <div className="border-b bg-card px-4 py-3 font-semibold tracking-tight md:hidden">{t("brand")}</div>
+      <div className="border-b bg-card px-4 py-3 md:hidden">
+        <Skeleton className="h-6 w-20" />
+      </div>
       <div className="flex-1 p-6">
         <ProjectSkeleton />
       </div>
