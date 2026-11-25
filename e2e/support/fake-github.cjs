@@ -1,11 +1,17 @@
 // Preloaded into the e2e instance server (NODE_OPTIONS=--require): answers api.github.com from a fixture, so the real
 // GitHub adapter, discovery and permission checks run end to end without the network. Anything else goes out as usual.
+const { readFileSync } = process.getBuiltinModule("node:fs");
+const { join } = process.getBuiltinModule("node:path");
+
 const realFetch = globalThis.fetch;
 const API = "https://api.github.com";
 
 const HUB_YML = `version: 1
 project:
   name: Starfall
+sources:
+  # A source that is down: the host never resolves.
+  gone: { url: "https://gone.invalid/data.json" }
 pages:
   - id: overview
     title: Overview
@@ -27,10 +33,19 @@ pages:
       - { type: github.workflow_runs, title: P8, branch: main }
       - { type: github.releases, title: P9 }
       - { type: github.releases, title: P10, limit: 5 }
+  - id: down
+    title: Down
+    widgets:
+      - { type: kpi, title: Gone, source: gone, label: Users, path: total }
+      - { type: github.releases, title: Still here }
 `;
 const ETAG = '"hub-v1"';
-// Who GitHub says is a collaborator of acme/web, and with which role. Everybody else is a stranger.
+// The second repository, whose file is invalid.
+const BROKEN_YML = readFileSync(join(__dirname, "broken.hub.yml"), "utf8");
+// Who GitHub says is a collaborator of the repositories, and with which role. Everybody else is a stranger.
 const COLLABORATORS = { alice: "write" };
+// With no allowlist, the members of the organization are who may use the hub: bob may, and sees no repository.
+const MEMBERS = ["alice", "bob"];
 
 const ITEM_URL = "https://github.com/acme/web/x";
 const ten = (make) => Array.from({ length: 10 }, (_, i) => make(i + 1));
@@ -80,6 +95,19 @@ const LISTS = {
     })),
 };
 
+const repository = (id, name) => ({
+  id,
+  name,
+  owner: { login: "acme" },
+  default_branch: "main",
+  private: true,
+  archived: false,
+});
+const file = (text, etag, headers) =>
+  headers.get("if-none-match") === etag
+    ? empty(304)
+    : json({ type: "file", sha: "abc123", encoding: "base64", content: Buffer.from(text).toString("base64") }, 200, { etag });
+
 const json = (body, status = 200, headers = {}) =>
   new Response(JSON.stringify(body), {
     status,
@@ -100,42 +128,25 @@ function answer(method, path, headers) {
   if (method === "POST" && path === "/app/installations/7/access_tokens")
     return json({ token: "ghs_e2e", expires_at: "2099-01-01T00:00:00Z" }, 201);
   if (method === "GET" && path.startsWith("/installation/repositories?")) {
-    return json({
-      repositories: [
-        {
-          id: 1,
-          name: "web",
-          owner: { login: "acme" },
-          default_branch: "main",
-          private: true,
-          archived: false,
-        },
-      ],
-    });
+    return json({ repositories: [repository(1, "web"), repository(2, "zeta")] });
   }
-  if (method === "GET" && path === "/repos/acme/web/installation")
+  if (method === "GET" && /^\/repos\/acme\/(web|zeta)\/installation$/.test(path))
     return json({ id: 7 });
-  if (method === "GET" && path === "/repos/acme/web/contents/.hub.yml") {
-    if (headers.get("if-none-match") === ETAG) return empty(304);
-    return json(
-      {
-        type: "file",
-        sha: "abc123",
-        encoding: "base64",
-        content: Buffer.from(HUB_YML).toString("base64"),
-      },
-      200,
-      { etag: ETAG },
-    );
-  }
+  if (method === "GET" && path === "/repos/acme/web/contents/.hub.yml")
+    return file(HUB_YML, ETAG, headers);
+  if (method === "GET" && path === "/repos/acme/zeta/contents/.hub.yml")
+    return file(BROKEN_YML, '"broken-v1"', headers);
   const list =
     /^\/repos\/acme\/web(\/issues|\/pulls|\/actions\/runs|\/releases)\?/.exec(
       path,
     );
   if (method === "GET" && list)
     return json(LISTS[list[1]](), 200, { etag: `"list-${list[1]}"` });
+  const member = /^\/orgs\/acme\/members\/([^/]+)$/.exec(path);
+  if (method === "GET" && member)
+    return empty(MEMBERS.includes(member[1]) ? 204 : 404);
   const collaborator =
-    /^\/repos\/acme\/web\/collaborators\/([^/]+)(\/permission)?$/.exec(path);
+    /^\/repos\/acme\/(?:web|zeta)\/collaborators\/([^/]+)(\/permission)?$/.exec(path);
   if (method === "GET" && collaborator) {
     const role = COLLABORATORS[collaborator[1]];
     if (!collaborator[2]) return empty(role ? 204 : 404);
